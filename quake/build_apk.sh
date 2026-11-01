@@ -39,7 +39,7 @@ echo "== Compilando libftedroid.so ($ABI)"
 cmake -S fteqw -B "build-$ABI" -G Ninja \
   -DCMAKE_TOOLCHAIN_FILE="$NDK/build/cmake/android.toolchain.cmake" \
   -DANDROID_ABI="$ABI" -DANDROID_PLATFORM=android-24 \
-  -DCMAKE_BUILD_TYPE=Release
+  -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS="-fcommon"
 cmake --build "build-$ABI" --target ftedroid -j"$(nproc)"
 SO="$(find "build-$ABI" -name libftedroid.so | head -1)"
 [ -n "$SO" ] || { echo "No se generó libftedroid.so"; exit 1; }
