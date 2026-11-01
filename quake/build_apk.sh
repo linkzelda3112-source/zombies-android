@@ -24,6 +24,9 @@ grep -c "OpenGL_FOUND TRUE" fteqw/CMakeLists.txt
 sed -i 's|engine/client/snd_droid.c|engine/client/snd_opensl.c|' fteqw/CMakeLists.txt
 sed -i 's|SET(FTE_LIBS ${FTE_LIBS} android log EGL ${SYS_LIBS}|SET(FTE_LIBS ${FTE_LIBS} android log EGL OpenSLES ${SYS_LIBS}|' fteqw/CMakeLists.txt
 grep -n "OpenGL_FOUND TRUE\|snd_opensl\|OpenSLES" fteqw/CMakeLists.txt
+# La biblioteca de Android no incluía el servidor (necesario para correr el QuakeC / un solo jugador).
+sed -i '/ADD_LIBRARY(ftedroid MODULE/,/)/ s|\${FTE_CLIENT_FILES}|${FTE_CLIENT_FILES}\n\t\t\t${FTE_SERVER_FILES}|' fteqw/CMakeLists.txt
+grep -n -A6 "ADD_LIBRARY(ftedroid" fteqw/CMakeLists.txt
 # La llamada a VK_Init de Android quedó vieja: le falta el número de extensiones (1).
 sed -i 's/VK_Init(info, extnames, VKVID_CreateSurface, NULL)/VK_Init(info, extnames, 1, VKVID_CreateSurface, NULL)/' fteqw/engine/gl/gl_viddroid.c
 grep -n "VK_Init" fteqw/engine/gl/gl_viddroid.c
