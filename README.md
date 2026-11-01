@@ -1,34 +1,42 @@
-# Zombies Starter (Android, Unity)
+# Zombies Android (Unity)
 
-Base jugable de un modo Zombies por rondas: movimiento táctil, disparo, recarga, zombies con NavMesh,
+Modo Zombies por rondas para Android: movimiento táctil, disparo, recarga, zombies con NavMesh,
 rondas que escalan, puntos y compra de munición. Cámara con interruptor primera/tercera persona.
 
-## Requisitos
-- Unity 6 (o 2022 LTS) con el módulo **Android Build Support**.
-- Proyecto en plantilla **3D (URP)** o 3D estándar.
-- Paquete **AI Navigation** (Package Manager) para el NavMesh.
+El proyecto **genera su propia escena de prueba por código** (suelo, paredes, jugador, zombies, UI),
+así que se puede compilar a APK sin abrir el editor de Unity.
 
-## Montaje rápido
-1. Copia la carpeta `Scripts` a `Assets/Scripts`.
-2. **Escenario:** crea un plano grande (suelo) y algunas paredes/cajas. Añade un componente
-   **NavMesh Surface** al suelo y pulsa **Bake**.
-3. **Jugador:**
-   - Crea una cápsula "Player" con `CharacterController`, `PlayerController`, `PlayerStats`, `Weapon`.
-   - Añade un hijo vacío "CameraPivot" a ~1.6 m de altura y pon la **Main Camera** dentro.
-   - Asigna `cameraPivot` y `cam` en `PlayerController`, y `cam` en `Weapon`.
-4. **Input:** crea un objeto vacío "Input" con `TouchInput`.
-5. **Zombie (prefab):** cápsula o modelo con `NavMeshAgent`, `Collider`, `Zombie`.
-   Para headshots: hijo con collider en la cabeza y tag `Head`.
-6. **Rondas:** objeto vacío "Waves" con `WaveManager`; asigna el prefab y 3–4 puntos de spawn
-   (objetos vacíos repartidos por el mapa, lejos del jugador).
-7. **UI (Canvas):** textos de puntos, vida, munición y ronda; botón de disparo con EventTrigger
-   (PointerDown → `TouchInput.FireDown`, PointerUp → `TouchInput.FireUp`); botón de recarga
-   (`Weapon.Reload`); botón de cámara (`PlayerController.ToggleCamera`); panel de Game Over.
-8. **Android:** File → Build Profiles → Android → *Switch Platform*. En Player Settings:
-   Orientación = Landscape Left, Scripting Backend = IL2CPP, ARM64 activado, Min API 24.
-   Conecta tu celular con depuración USB y pulsa **Build And Run**.
+## APK automático con GitHub Actions
+
+Cada `push` a `main` (o el botón **Run workflow** en la pestaña Actions) compila el APK y lo deja
+como artefacto `zombies-apk` en la ejecución del workflow.
+
+Antes de la primera vez hay que dar la licencia de Unity al CI. En el repo:
+**Settings → Secrets and variables → Actions → New repository secret**, y crea:
+
+| Secreto | Contenido |
+|---|---|
+| `UNITY_EMAIL` | Correo de tu cuenta de Unity |
+| `UNITY_PASSWORD` | Contraseña de tu cuenta de Unity |
+| `UNITY_LICENSE` | Contenido del archivo `.ulf` de licencia Personal |
+
+La forma de obtener el `.ulf` (activación manual de la licencia Personal) está en la documentación
+de GameCI: https://game.ci/docs/github/activation
+
+Instalar el APK: descarga el artefacto, descomprímelo, pasa `zombies.apk` al celular y permite
+"instalar apps de origen desconocido".
+
+## Abrir en Unity (opcional)
+1. Unity Hub → Add project from disk → esta carpeta, con **Unity 2022.3.45f1** + módulo Android.
+2. Menú **Zombies → Generar escena**, abre `Assets/Scenes/Main.unity` y dale Play.
+   En el editor se controla con WASD + ratón, clic izquierdo dispara.
+
+## Estructura
+- `Assets/Scripts`: jugador, arma, zombie, rondas, puntos, compra de munición, entrada táctil.
+- `Assets/Editor/BuildScript.cs`: genera la escena y compila el APK (`BuildScript.Build`).
+- `.github/workflows/build-apk.yml`: flujo de compilación.
 
 ## Siguientes pasos
-- Modelos y animaciones de zombie (Mixamo, gratis) y armas (Asset Store / Sketchfab con licencia libre).
+- Modelos y animaciones de zombie (Mixamo) y armas con licencia libre.
 - Barricadas en ventanas, Mystery Box, perks, más armas.
-- Optimizar: pool de zombies, luces horneadas, calidad baja/media para celulares modestos.
+- Optimizar: pool de zombies, calidad baja/media para celulares modestos.

@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.AI;
 
 // Zombie que persigue al jugador con NavMesh. Requiere NavMeshAgent y Collider.
-// Para headshots: pon un collider hijo en la cabeza con el tag "Head" (créalo en Tags).
+// Para headshots: pon un collider hijo en la cabeza llamado "Head".
 [RequireComponent(typeof(NavMeshAgent))]
 public class Zombie : MonoBehaviour
 {

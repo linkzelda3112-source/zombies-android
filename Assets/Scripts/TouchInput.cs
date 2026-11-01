@@ -25,6 +25,7 @@ public class TouchInput : MonoBehaviour
 #endif
         foreach (Touch t in Input.touches)
         {
+            if (t.phase == TouchPhase.Began && UnityEngine.EventSystems.EventSystem.current != null && UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject(t.fingerId)) continue;
             bool leftSide = t.position.x < Screen.width * 0.5f;
             if (t.phase == TouchPhase.Began)
             {

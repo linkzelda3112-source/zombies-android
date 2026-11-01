@@ -47,7 +47,7 @@ public class Weapon : MonoBehaviour
             var z = hit.collider.GetComponentInParent<Zombie>();
             if (z != null)
             {
-                bool head = hit.collider.CompareTag("Head");
+                bool head = hit.collider.name == "Head";
                 z.TakeDamage(head ? damage * headshotMultiplier : damage, head);
             }
         }
