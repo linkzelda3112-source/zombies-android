@@ -16,6 +16,14 @@ cd "$WORK"
 echo "== Motor FTEQW"
 [ -d fteqw ] || git clone --depth 1 https://github.com/fte-team/fteqw fteqw
 
+echo "== Parches al CMake del motor (OpenGL ES y sonido OpenSL en Android)"
+# FIND_PACKAGE(OpenGL) no encuentra nada en el NDK; en Android siempre hay GLES.
+sed -i 's/^FIND_PACKAGE(OpenGL)$/IF(ANDROID)\nSET(OpenGL_FOUND TRUE)\nELSE()\nFIND_PACKAGE(OpenGL)\nENDIF()/' fteqw/CMakeLists.txt
+# Igual que el Makefile del motor: sonido con OpenSL ES.
+sed -i 's|engine/client/snd_droid.c|engine/client/snd_opensl.c|' fteqw/CMakeLists.txt
+sed -i 's|SET(FTE_LIBS ${FTE_LIBS} android log EGL ${SYS_LIBS}|SET(FTE_LIBS ${FTE_LIBS} android log EGL OpenSLES ${SYS_LIBS}|' fteqw/CMakeLists.txt
+grep -n "OpenGL_FOUND TRUE\|snd_opensl\|OpenSLES" fteqw/CMakeLists.txt
+
 echo "== Herramientas Android"
 PLATFORM="$(ls "$SDK/platforms" | grep -E '^android-[0-9]+$' | sort -t- -k2 -n | tail -1)"
 BT="$(ls "$SDK/build-tools" | sort -V | tail -1)"
