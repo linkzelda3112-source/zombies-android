@@ -78,3 +78,6 @@ cp "$DROID/fte.cfg" "$DROID/configs/touch.cfg" stage/
   --out "$OUT/zombies.apk" aligned.apk
 "$BTOOLS/apksigner" verify "$OUT/zombies.apk"
 ls -la "$OUT/zombies.apk"
+echo "== Contenido del APK"
+unzip -l "$OUT/zombies.apk"
+"$BTOOLS/aapt2" dump badging "$OUT/zombies.apk" | head -20
