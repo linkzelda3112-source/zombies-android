@@ -40,6 +40,10 @@ grep -c "unsigned int j; for (j = 0; j < entry.fname_len" fteqw/engine/common/fs
 sed -i 's|android:name="com.fteqw.FTENativeActivity"|android:name="com.fteqw.FTENativeActivity" android:screenOrientation="sensorLandscape"|' fteqw/engine/droid/AndroidManifest.xml
 grep -n "screenOrientation" fteqw/engine/droid/AndroidManifest.xml
 
+# El motor prefiere Vulkan en Android pero no rota la imagen al girar la pantalla (sale "parado"). Preferimos OpenGL ES 2.
+sed -i '/static int VKVID_GetPriority/,/^}/ s/return 3;/return 0;/' fteqw/engine/gl/gl_viddroid.c
+grep -n -A3 "static int VKVID_GetPriority" fteqw/engine/gl/gl_viddroid.c
+
 echo "== Herramientas Android"
 PLATFORM="$(ls "$SDK/platforms" | grep -E '^android-[0-9]+$' | sort -t- -k2 -n | tail -1)"
 BT="$(ls "$SDK/build-tools" | sort -V | tail -1)"
