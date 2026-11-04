@@ -61,6 +61,13 @@ float zm_botspawned;
 .float zm_hurt;         // contador de golpes recibidos (para el flash rojo)
 .float zm_reloading;
 .float zm_nextjump;
+.float zm_stance;      // 0 de pie, 1 agachado, 2 deslizando
+.float zm_slide_end;
+.float zm_slide_start;
+.vector zm_slidedir;
+.float zm_sprinting;
+.float zm_nextmelee;
+.float zm_b4;
 .string zm_prompt;
 
 // ---- campos por zombie -----------------------------------------------------

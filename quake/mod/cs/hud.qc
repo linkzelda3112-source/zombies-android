@@ -172,7 +172,7 @@ void(vector viewsize, float scoresshown) CSQC_DrawHud =
 		w = stringwidth(prompt, FALSE, '10 10 0');
 		drawfill([(viewsize_x - w) * 0.5 - 8, viewsize_y * 0.62 - 4, 0], [w + 16, 18, 0], '0 0 0', 0.55, 0);
 		HudCenter(viewsize, viewsize_y * 0.62, prompt, '10 10 0', '1 1 1', 1);
-		HudCenter(viewsize, viewsize_y * 0.62 + 20, "tap BUY", '8 8 0', '0.8 0.8 0.8', 0.8);
+		HudCenter(viewsize, viewsize_y * 0.62 + 20, (t_mode ? "press X" : "tap BUY"), '8 8 0', '0.8 0.8 0.8', 0.8);
 	}
 
 	// ---- controles tactiles

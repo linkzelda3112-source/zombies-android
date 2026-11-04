@@ -271,6 +271,31 @@ def g_jump(im, s):
     im.rect(c - 3, c, c + 4, c + 12, (255, 255, 255, 240))
 
 
+def g_melee(im, s):
+    c = s // 2
+    # cuchillo en diagonal: hoja + mango
+    for i in range(-14, 11):
+        for w in range(-2, 3):
+            im.set(c + i, c - i + w - 1, (255, 255, 255, 240))
+    for i in range(8):
+        for w in range(-3, 4):
+            im.set(c - 14 - i // 2 + w, c + 14 + i // 2 + w, (210, 170, 110, 240))
+    im.rect(c - 8, c + 5, c - 1, c + 8, (255, 255, 255, 240))
+
+
+def g_slide(im, s):
+    c = s // 2
+    # figura agachada deslizando hacia la derecha: cuerpo + flecha
+    im.rect(c - 12, c + 4, c + 8, c + 9, (255, 255, 255, 240))
+    for i in range(6):
+        for j in range(-i, i + 1):
+            im.set(c + 8 + i, c + 6 + j, (255, 255, 255, 240))
+    for a in range(0, 360, 6):
+        x, y = c - 6 + 4 * math.cos(math.radians(a)), c - 5 + 4 * math.sin(math.radians(a))
+        im.set(int(x), int(y), (255, 255, 255, 240))
+    im.rect(c - 7, c - 2, c - 4, c + 4, (255, 255, 255, 240))
+
+
 def stick_icon():
     im = Img(128, 128, (0, 0, 0, 0))
     c = 63.5
@@ -317,6 +342,8 @@ def main(out):
     circle_icon(64, ring, (140, 110, 20, 140), g_buy).save_tga(os.path.join(out, "gfx", "touch_buy.tga"))
     circle_icon(64, ring, fill, g_swap).save_tga(os.path.join(out, "gfx", "touch_swap.tga"))
     circle_icon(64, ring, fill, g_jump).save_tga(os.path.join(out, "gfx", "touch_jump.tga"))
+    circle_icon(64, ring, (170, 30, 30, 140), g_melee).save_tga(os.path.join(out, "gfx", "touch_melee.tga"))
+    circle_icon(64, ring, fill, g_slide).save_tga(os.path.join(out, "gfx", "touch_slide.tga"))
     stick_icon().save_tga(os.path.join(out, "gfx", "touch_stick.tga"))
 
 

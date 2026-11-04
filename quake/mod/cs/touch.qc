@@ -12,6 +12,8 @@
 #define R_RELOAD    5
 #define R_BUY       6
 #define R_SWAP      7
+#define R_MELEE     8
+#define R_SLIDE     9
 
 #define K_TOUCH_A       600
 #define K_TOUCH_B       603
@@ -30,6 +32,12 @@ float t_w, t_h;           // tamano virtual de pantalla
 float t_stick_x, t_stick_y;
 float t_impulse;
 float t_inited;
+float t_mode;              // 0 = tactil, 1 = control (mando)
+
+// estado del mando
+float pad_lx, pad_ly, pad_rx, pad_ry, pad_lt, pad_rt;
+float pad_a, pad_b, pad_rtk, pad_ltk;   // botones mantenidos (A, B, gatillos como tecla)
+float pad_sprint;                        // L3 alterna correr
 
 #define STICK_R     46
 #define STICK_DEAD  0.14
@@ -43,6 +51,8 @@ void() Touch_Init =
 	precache_pic("gfx/touch_swap.tga");
 	precache_pic("gfx/touch_jump.tga");
 	precache_pic("gfx/touch_stick.tga");
+	precache_pic("gfx/touch_melee.tga");
+	precache_pic("gfx/touch_slide.tga");
 };
 
 // centro de cada boton segun el tamano de pantalla
@@ -52,6 +62,8 @@ vector(float role) Touch_BtnPos =
 	if (role == R_JUMP)   return [t_w - 62, t_h - 150, 0];
 	if (role == R_RELOAD) return [t_w - 136, t_h - 46, 0];
 	if (role == R_SWAP)   return [t_w - 38, 44, 0];
+	if (role == R_MELEE)  return [t_w - 38, 98, 0];
+	if (role == R_SLIDE)  return [t_w - 196, t_h - 62, 0];
 	if (role == R_BUY)    return [t_w - 134, t_h - 108, 0];
 	return '0 0 0';
 };
@@ -61,7 +73,8 @@ float(float role) Touch_BtnRadius =
 	if (role == R_FIRE) return 42;
 	if (role == R_JUMP) return 28;
 	if (role == R_BUY) return 30;
-	if (role == R_SWAP) return 22;
+	if (role == R_SWAP || role == R_MELEE) return 22;
+	if (role == R_SLIDE) return 26;
 	return 26;
 };
 
@@ -69,7 +82,7 @@ float(float x, float y) Touch_Hit =
 {
 	local float r;
 	local vector c;
-	for (r = R_FIRE; r <= R_SWAP; r++)
+	for (r = R_FIRE; r <= R_SLIDE; r++)
 	{
 		c = Touch_BtnPos(r);
 		if (vlen([x - c_x, y - c_y, 0]) < Touch_BtnRadius(r) + 6)
@@ -135,7 +148,7 @@ void(float d, float x, float y) Touch_Move =
 		return;
 	}
 	// un boton de accion (recargar, comprar, cambiar) que se arrastra pasa a ser "mirar"
-	if (t_role[d] >= R_RELOAD && t_role[d] <= R_SWAP)
+	if (t_role[d] >= R_RELOAD && t_role[d] <= R_MELEE)
 	{
 		if (vlen([x - t_ox[d], y - t_oy[d], 0]) > 14)
 			t_role[d] = R_LOOK;
@@ -157,11 +170,74 @@ void(float d, float x, float y) Touch_Move =
 	}
 };
 
+void() Pad_Reset =
+{
+	pad_lx = 0; pad_ly = 0; pad_rx = 0; pad_ry = 0; pad_lt = 0; pad_rt = 0;
+	pad_a = 0; pad_b = 0; pad_rtk = 0; pad_ltk = 0; pad_sprint = 0;
+};
+
+void(float m) Touch_SetMode =
+{
+	local float i;
+	if (m == t_mode) return;
+	t_mode = m;
+	if (m == 1)
+	{
+		for (i = 0; i < T_MAXF; i++) { t_down[i] = FALSE; t_rel[i] = FALSE; t_role[i] = R_NONE; }
+	}
+	else
+		Pad_Reset();
+};
+
+// teclas/ejes del mando; devuelve TRUE si las usamos
+float(float ie, float p1, float p2) Pad_Event =
+{
+	local float down;
+	if (ie == IE_JOYAXIS)
+	{
+		if (p1 == 0) pad_lx = p2;
+		else if (p1 == 1) pad_ly = p2;
+		else if (p1 == 3) pad_rx = p2;
+		else if (p1 == 4) pad_ry = p2;
+		else if (p1 == 2) pad_lt = p2;
+		else if (p1 == 5) pad_rt = p2;
+		else return FALSE;
+		if (fabs(p2) > 0.45) Touch_SetMode(1);
+		return TRUE;
+	}
+	if (p1 < 816 || p1 > 839) return FALSE;
+	down = (ie == IE_KEYDOWN);
+	if (down) Touch_SetMode(1);
+	if (p1 == K_GP_A) pad_a = down;
+	else if (p1 == K_GP_B) pad_b = down;
+	else if (p1 == K_GP_RTRIGGER) pad_rtk = down;
+	else if (p1 == K_GP_LTRIGGER) pad_ltk = down;
+	else if (down)
+	{
+		if (p1 == K_GP_X) t_impulse = 23;                         // usar / comprar / recargar
+		else if (p1 == K_GP_Y) t_impulse = 10;                    // cambiar arma
+		else if (p1 == K_GP_RTHUMB || p1 == K_GP_RSHOULDER) t_impulse = 22;   // cuchillada
+		else if (p1 == K_GP_LSHOULDER) t_impulse = 21;            // recargar
+		else if (p1 == K_GP_LTHUMB) pad_sprint = !pad_sprint;     // correr (alterna)
+		else if (p1 == K_GP_DPAD_UP || p1 == K_GP_DPAD_RIGHT) t_impulse = 10;
+	}
+	return TRUE;
+};
+
 float(float ie, float p1, float p2, float p3) Touch_Event =
 {
 	local float d;
 	d = p3;
 	if (d < 0 || d >= T_MAXF) d = 0;
+
+	if (ie == IE_JOYAXIS)
+		return Pad_Event(ie, p1, p2);
+	if ((ie == IE_KEYDOWN || ie == IE_KEYUP) && p1 >= 816 && p1 <= 839)
+		return Pad_Event(ie, p1, p2);
+
+	// cualquier toque en pantalla vuelve a los controles tactiles
+	if (ie == IE_MOUSEABS || ((ie == IE_KEYDOWN) && ((p1 >= K_TOUCH_A && p1 <= K_TOUCH_B) || p1 == K_MOUSE1_A)))
+		Touch_SetMode(0);
 
 	if (ie == IE_MOUSEABS)
 	{
@@ -188,6 +264,52 @@ float(float ie, float p1, float p2, float p3) Touch_Event =
 	return FALSE;
 };
 
+// mando: palanca izquierda mueve, derecha mira; gatillos y botones como en BO3
+void() Pad_Frame =
+{
+	local float lx, ly, m, rx, ry, dt, s, ml;
+	local vector a;
+	ml = sqrt(pad_lx * pad_lx + pad_ly * pad_ly);
+	lx = 0; ly = 0;
+	if (ml > 0.2)
+	{
+		m = (ml - 0.2) / 0.8;
+		if (m > 1) m = 1;
+		lx = pad_lx / ml * m;
+		ly = pad_ly / ml * m;
+	}
+	t_stick_x = lx;
+	t_stick_y = ly;
+	rx = pad_rx; ry = pad_ry;
+	m = sqrt(rx * rx + ry * ry);
+	if (m > 0.15)
+	{
+		s = (m - 0.15) / 0.85;
+		if (s > 1) s = 1;
+		s = s * s;
+		rx = rx / m * s;
+		ry = ry / m * s;
+		dt = input_timelength;
+		if (dt <= 0 || dt > 0.1) dt = 0.016;
+		a = getviewprop(VF_CL_VIEWANGLES);
+		a_y = a_y - rx * 230 * dt;
+		a_x = a_x + ry * 170 * dt;
+		if (a_x > 80) a_x = 80;
+		if (a_x < -80) a_x = -80;
+		setviewprop(VF_CL_VIEWANGLES, a);
+		input_angles = a;
+	}
+	if (pad_rtk || pad_rt > 0.4) input_buttons = input_buttons | 1;
+	if (pad_ltk || pad_lt > 0.4) input_buttons = input_buttons | 32;
+	if (pad_a) input_buttons = input_buttons | 2;
+	if (pad_b) input_buttons = input_buttons | 8;
+	if (pad_sprint)
+	{
+		if (ly < -0.3) input_buttons = input_buttons | 4;
+		else pad_sprint = FALSE;
+	}
+};
+
 // lo llama el motor en cada comando de movimiento: aqui metemos movimiento y botones
 void() CSQC_Input_Frame =
 {
@@ -202,6 +324,7 @@ void() CSQC_Input_Frame =
 		if (t_role[i] == R_NONE) Touch_Assign(i);	// no llego posicion nueva: usamos la ultima conocida
 		if (t_role[i] == R_FIRE) fire = TRUE;
 		else if (t_role[i] == R_JUMP) jump = TRUE;
+		else if (t_role[i] == R_SLIDE) input_buttons = input_buttons | 8;
 		else if (t_role[i] == R_STICK)
 		{
 			dx = t_x[i] - t_sx[i];
@@ -224,7 +347,12 @@ void() CSQC_Input_Frame =
 		if (t_role[i] == R_RELOAD) t_impulse = 21;
 		else if (t_role[i] == R_BUY) t_impulse = 20;
 		else if (t_role[i] == R_SWAP) t_impulse = 10;
+		else if (t_role[i] == R_MELEE) t_impulse = 22;
 	}
+	if (t_mode == 1)
+		Pad_Frame();
+	else if (t_stick_y < -0.5 && fabs(t_stick_x) < 0.6 && sqrt(t_stick_x * t_stick_x + t_stick_y * t_stick_y) > 0.93)
+		input_buttons = input_buttons | 4;       // palanca a tope hacia adelante = correr
 	input_movevalues_x = input_movevalues_x - t_stick_y * 400;
 	input_movevalues_y = input_movevalues_y + t_stick_x * 400;
 	if (fire) input_buttons = input_buttons | 1;
@@ -271,11 +399,14 @@ void(vector viewsize, float buyready) Touch_Draw =
 	if (!t_inited) Touch_Init();
 	t_w = viewsize_x;
 	t_h = viewsize_y;
+	if (t_mode == 1) return;   // con mando en uso no se dibujan los controles tactiles
 
 	Touch_DrawBtn(R_FIRE, "gfx/touch_fire.tga", 0.5, '1 1 1');
 	Touch_DrawBtn(R_JUMP, "gfx/touch_jump.tga", 0.45, '1 1 1');
 	Touch_DrawBtn(R_RELOAD, "gfx/touch_reload.tga", 0.45, '1 1 1');
 	Touch_DrawBtn(R_SWAP, "gfx/touch_swap.tga", 0.45, '1 1 1');
+	Touch_DrawBtn(R_MELEE, "gfx/touch_melee.tga", 0.45, '1 1 1');
+	Touch_DrawBtn(R_SLIDE, "gfx/touch_slide.tga", 0.45, '1 1 1');
 	if (buyready)
 		Touch_DrawBtn(R_BUY, "gfx/touch_buy.tga", 0.95, '1 1 0.4');
 	else

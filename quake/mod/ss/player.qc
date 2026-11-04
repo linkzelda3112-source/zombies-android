@@ -140,6 +140,9 @@ void() PutClientInServer =
 	self.maxspeed = 280;
 	self.gravity = 1;
 	self.view_ofs = '0 0 22';
+	self.zm_stance = 0;
+	self.zm_sprinting = 0;
+	self.zm_slide_end = 0;
 	self.velocity = '0 0 0';
 	self.effects = 0;
 	self.model = "";
@@ -165,6 +168,96 @@ void() PutClientInServer =
 	W_Equip(self);
 };
 
+// ---- movimiento tipo BO3: correr, agacharse, deslizarse (B), cuchillada ------------
+void(entity p, float st) Stance_Set =
+{
+	if (st == p.zm_stance) return;
+	if (st == 0)
+	{
+		tracebox(p.origin, '-16 -16 -24', '16 16 32', p.origin, FALSE, p);
+		if (trace_startsolid || trace_allsolid) return;   // no hay espacio para levantarse
+		setsize(p, '-16 -16 -24', '16 16 32');
+		p.view_ofs = '0 0 22';
+	}
+	else
+	{
+		setsize(p, '-16 -16 -24', '16 16 8');
+		p.view_ofs = '0 0 4';
+	}
+	p.zm_stance = st;
+};
+
+void(entity p) Move_Update =
+{
+	local float spd, ground, press, v, t;
+	local vector d;
+	ground = p.flags & FL_ONGROUND;
+	spd = vlen([p.velocity_x, p.velocity_y, 0]);
+	press = p.button4 && !p.zm_b4;
+	p.zm_b4 = p.button4;
+
+	// correr: boton de sprint + moviendose hacia adelante, de pie
+	p.zm_sprinting = FALSE;
+	if (p.button3 && p.zm_stance == 0 && ground && spd > 200 && !p.zm_reload_end)
+		p.zm_sprinting = TRUE;
+
+	// B: deslizarse si vas corriendo; si no, agacharse mientras lo mantienes
+	if (press && p.zm_sprinting && time > p.zm_slide_end + 0.3)
+	{
+		makevectors(p.v_angle);
+		d = [p.velocity_x, p.velocity_y, 0];
+		p.zm_slidedir = normalize(d);
+		p.zm_slide_start = time;
+		p.zm_slide_end = time + 0.85;
+		Stance_Set(p, 2);
+	}
+	if (p.zm_stance == 2)
+	{
+		if (time >= p.zm_slide_end || !ground || p.button2)
+		{
+			if (p.button4 && ground) Stance_Set(p, 1);
+			else Stance_Set(p, 0);
+			if (p.zm_stance == 2) p.zm_slide_end = time;
+		}
+		else
+		{
+			t = (p.zm_slide_end - time) / 0.85;
+			v = 200 + 330 * t * t;
+			p.velocity_x = p.zm_slidedir_x * v;
+			p.velocity_y = p.zm_slidedir_y * v;
+		}
+	}
+	else if (p.button4 && ground)
+		Stance_Set(p, 1);
+	else if (p.zm_stance == 1 && !p.button4)
+		Stance_Set(p, 0);
+
+	if (p.zm_stance == 2) p.maxspeed = 100;
+	else if (p.zm_stance == 1) p.maxspeed = 130;
+	else if (p.zm_sprinting) p.maxspeed = 380;
+	else if (p.button6) p.maxspeed = 200;
+	else p.maxspeed = 280;
+};
+
+void(entity p) Melee =
+{
+	local vector src;
+	if (time < p.zm_nextmelee || p.zm_reload_end) return;
+	p.zm_nextmelee = time + 0.6;
+	p.punchangle = '-3 0 0';
+	makevectors(p.v_angle);
+	src = p.origin + p.view_ofs;
+	traceline(src, src + v_forward * 72, FALSE, p);
+	if (trace_ent != world && trace_ent.classname == "zombie" && trace_ent.takedamage)
+	{
+		te_blood(trace_endpos, '0 0 0', 40);
+		Hurt(trace_ent, p, 150, FALSE);
+		sound(p, CHAN_WEAPON, "zombie/hit.wav", 1, ATTN_NORM);
+	}
+	else
+		sound(p, CHAN_WEAPON, "weapons/empty.wav", 0.7, ATTN_NORM);
+};
+
 void() PlayerPreThink =
 {
 	local float imp;
@@ -176,6 +269,7 @@ void() PlayerPreThink =
 	}
 
 	if (self.zm_isbot) bot_think();
+	Move_Update(self);
 
 	// regeneracion de vida (como en CoD: a los 5 s sin recibir dano)
 	if (self.health < self.max_health && time > self.zm_lasthurt + 5)
@@ -196,6 +290,12 @@ void() PlayerPreThink =
 		else if (imp == 10) W_Next(self);
 		else if (imp == 20) Buy_Try(self);
 		else if (imp == 21) W_Reload(self);
+		else if (imp == 22) Melee(self);
+		else if (imp == 23)
+		{	// "usar": compra si hay algo cerca; si no, recarga
+			if (Buy_Near(self) != world) Buy_Try(self);
+			else W_Reload(self);
+		}
 	}
 
 	// salto (boton tactil o tecla)
