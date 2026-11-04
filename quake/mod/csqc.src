@@ -2,4 +2,5 @@
 #pragma target FTE
 #define CSQC
 fteextensions.qc
+cs/touch.qc
 cs/hud.qc

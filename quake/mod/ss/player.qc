@@ -198,6 +198,14 @@ void() PlayerPreThink =
 		else if (imp == 21) W_Reload(self);
 	}
 
+	// salto (boton tactil o tecla)
+	if (self.button2 && (self.flags & FL_ONGROUND) && time > self.zm_nextjump)
+	{
+		self.flags = self.flags - FL_ONGROUND;
+		self.velocity_z = self.velocity_z + 270;
+		self.zm_nextjump = time + 0.4;
+	}
+
 	// disparo
 	W_Load(self.zm_cur);
 	if (self.button0)

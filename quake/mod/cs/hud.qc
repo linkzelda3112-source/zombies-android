@@ -175,6 +175,9 @@ void(vector viewsize, float scoresshown) CSQC_DrawHud =
 		HudCenter(viewsize, viewsize_y * 0.62 + 20, "tap BUY", '8 8 0', '0.8 0.8 0.8', 0.8);
 	}
 
+	// ---- controles tactiles
+	if (!over) Touch_Draw(viewsize, prompt != "");
+
 	// ---- anuncio de ronda
 	t = time - hud_round_t;
 	if (rnd > 0 && t < 3.5 && !over)
@@ -194,9 +197,4 @@ void(vector viewsize, float scoresshown) CSQC_DrawHud =
 		HudCenter(viewsize, viewsize_y * 0.34 + 50, strcat("YOU SURVIVED ", ftos(rnd), " ROUNDS"), '12 12 0', '1 1 1', 1);
 		HudCenter(viewsize, viewsize_y * 0.34 + 70, strcat("KILLS ", ftos(kills)), '10 10 0', '0.9 0.9 0.9', 1);
 	}
-};
-
-// el motor la llama en cada frame de entrada; no necesitamos tocar nada
-void() CSQC_Input_Frame =
-{
 };
