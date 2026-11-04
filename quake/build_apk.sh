@@ -44,6 +44,11 @@ grep -n "screenOrientation" fteqw/engine/droid/AndroidManifest.xml
 sed -i '/static int VKVID_GetPriority/,/^}/ s/return 3;/return 0;/' fteqw/engine/gl/gl_viddroid.c
 grep -n -A3 "static int VKVID_GetPriority" fteqw/engine/gl/gl_viddroid.c
 
+# Mando: Android da ids de dispositivo grandes (>= 8) y el motor descarta los ejes de esos ids (palancas muertas). Todo al id 0.
+sed -i '/static void FTENativeActivity_axis/,/^}/ s/IN_JoystickAxisEvent(devid, axis, value);/IN_JoystickAxisEvent(0, axis, value);/' fteqw/engine/client/sys_droid.c
+sed -i '/static void FTENativeActivity_keypress/,/^}/ s/IN_KeyEvent(devid, down, qkeycode, unicode);/IN_KeyEvent(0, down, qkeycode, unicode);/' fteqw/engine/client/sys_droid.c
+grep -n "IN_JoystickAxisEvent(0\|IN_KeyEvent(0, down" fteqw/engine/client/sys_droid.c
+
 echo "== Herramientas Android"
 PLATFORM="$(ls "$SDK/platforms" | grep -E '^android-[0-9]+$' | sort -t- -k2 -n | tail -1)"
 BT="$(ls "$SDK/build-tools" | sort -V | tail -1)"

@@ -303,10 +303,13 @@ void() Pad_Frame =
 	if (pad_ltk || pad_lt > 0.4) input_buttons = input_buttons | 32;
 	if (pad_a) input_buttons = input_buttons | 2;
 	if (pad_b) input_buttons = input_buttons | 8;
+	// correr como en BO3: L3 lo activa; se corta al soltar la palanca, disparar, apuntar, recargar o dar cuchillada
 	if (pad_sprint)
 	{
-		if (ly < -0.3) input_buttons = input_buttons | 4;
-		else pad_sprint = FALSE;
+		if (ly < -0.3 && !(input_buttons & 33) && t_impulse != 21 && t_impulse != 22 && t_impulse != 23)
+			input_buttons = input_buttons | 4;
+		else
+			pad_sprint = FALSE;
 	}
 };
 

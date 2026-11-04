@@ -57,6 +57,7 @@ void() worldspawn =
 	precache_sound("weapons/rifle.wav");
 	precache_sound("weapons/reload.wav");
 	precache_sound("weapons/empty.wav");
+	precache_sound("zombie/zombie1.wav");
 	precache_sound("zombie/groan1.wav");
 	precache_sound("zombie/groan2.wav");
 	precache_sound("zombie/groan3.wav");

@@ -117,7 +117,10 @@ void() zombie_think =
 		self.zm_attacking = 1;
 		self.zm_atk_hit = time + 0.45;
 		self.frame = 8;
-		if (random() < 0.5)
+		// al empezar a golpear: gruñido de ataque
+		if (random() < 0.6)
+			sound(self, CHAN_VOICE, "zombie/zombie1.wav", 1, ATTN_NORM);
+		else
 			sound(self, CHAN_VOICE, "zombie/groan2.wav", 1, ATTN_NORM);
 		return;
 	}
@@ -151,15 +154,27 @@ void() zombie_think =
 	else
 		self.frame = self.frame + 1;
 
-	if (random() < 0.02)
+	// gruñidos al perseguir: no encima del anterior, y mas seguido cuanto mas cerca del jugador
+	if (time >= self.zm_next_voice)
 	{
 		f = random();
-		if (f < 0.33)
-			sound(self, CHAN_VOICE, "zombie/groan1.wav", 1, ATTN_IDLE);
-		else if (f < 0.66)
-			sound(self, CHAN_VOICE, "zombie/groan2.wav", 1, ATTN_IDLE);
+		if (dist < 450)
+		{
+			if (f < 0.55)
+				sound(self, CHAN_VOICE, "zombie/zombie1.wav", 1, ATTN_NORM);
+			else if (f < 0.75)
+				sound(self, CHAN_VOICE, "zombie/groan1.wav", 1, ATTN_NORM);
+			else if (f < 0.9)
+				sound(self, CHAN_VOICE, "zombie/groan2.wav", 1, ATTN_NORM);
+			else
+				sound(self, CHAN_VOICE, "zombie/groan3.wav", 1, ATTN_NORM);
+		}
+		else if (f < 0.5)
+			sound(self, CHAN_VOICE, "zombie/groan3.wav", 0.8, ATTN_IDLE);
 		else
-			sound(self, CHAN_VOICE, "zombie/groan3.wav", 1, ATTN_IDLE);
+			sound(self, CHAN_VOICE, "zombie/zombie1.wav", 0.8, ATTN_IDLE);
+		// entre 2 y 6 s hasta el siguiente (los lejanos mas espaciados)
+		self.zm_next_voice = time + 2 + random() * 3 + ((dist > 450) ? 2 : 0);
 	}
 };
 
@@ -184,6 +199,7 @@ entity(vector org, float hp, float spd) zombie_spawn =
 	z.solid = SOLID_SLIDEBOX;
 	z.flags = FL_MONSTER;
 	setsize(z, '-16 -16 -24', '16 16 40');
+	z.zm_next_voice = time + 0.5 + random() * 3;
 	setorigin(z, org + '0 0 26');
 
 	old = self;
