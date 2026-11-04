@@ -18,6 +18,40 @@ jobs:
       - name: Dependencias
         run: sudo apt-get update && sudo apt-get install -y ninja-build cmake zip
 
+      - name: Herramientas del motor (fteqcc + servidor de pruebas)
+        run: |
+          git clone --depth 1 https://github.com/fte-team/fteqw build/hostfte
+          cmake -S build/hostfte -B build/hostfte/b -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS="-fcommon"
+          cmake --build build/hostfte/b --target fteqcc fteqw-sv -j"$(nproc)"
+          find build/hostfte/b -maxdepth 2 -type f \( -name fteqcc -o -name fteqw-sv \)
+
+      - name: Herramientas de mapas (ericw-tools)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p build/eric && cd build/eric
+          gh release download --repo ericwa/ericw-tools --pattern '*[Ll]inux*.zip'
+          unzip -q -o *.zip
+          find . -type f \( -name qbsp -o -name vis -o -name light \)
+          chmod +x $(find . -type f \( -name qbsp -o -name vis -o -name light \))
+
+      - name: Generar el juego (QuakeC, assets, mapa)
+        run: |
+          export FTEQCC="$(find $PWD/build/hostfte/b -maxdepth 2 -type f -name fteqcc | head -1)"
+          export ERIC_DIR="$(dirname "$(find $PWD/build/eric -type f -name qbsp | head -1)")/"
+          bash quake/build_game.sh
+
+      - name: Prueba del servidor con bot
+        run: |
+          SV="$(find $PWD/build/hostfte/b -maxdepth 2 -type f -name fteqw-sv | head -1)"
+          ( cd build/game && zip -q -r ../game.zip . )
+          mkdir -p build/run && cd build/run
+          for T in 1 2; do
+            timeout 70 "$SV" -nohome -basedir . -basepack ../game.zip +set zm_test $T +set developer 1 +map zombies > log$T.txt 2>&1 || true
+            grep -a -o 'ZM: [^\n]*' log$T.txt | head -8 || true
+          done
+          grep -a -q 'round 2 start' log2.txt || { echo "El bot no llego a la ronda 2"; tail -40 log2.txt; exit 1; }
+
       - name: Compilar APK
         run: bash quake/build_apk.sh
 

@@ -1,0 +1,5 @@
+FTEManifestVer 1
+game zombies
+name "Zombies"
+protocolname "FTE-Quake"
+disablehomedir 1

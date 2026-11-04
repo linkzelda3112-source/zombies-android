@@ -1,0 +1,9 @@
+../progs.dat
+#pragma target FTE
+#define SSQC
+fteextensions.qc
+ss/defs.qc
+ss/weapons.qc
+ss/zombie.qc
+ss/player.qc
+ss/world.qc

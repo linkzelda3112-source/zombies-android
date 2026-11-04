@@ -66,9 +66,10 @@ echo "== Armando el APK"
 rm -rf stage && mkdir -p "stage/lib/$ABI"
 cp dex/classes.dex stage/
 cp "$SO" "stage/lib/$ABI/libftedroid.so"
-cp "$DROID/fte.cfg" "$DROID/configs/touch.cfg" stage/
-# manifiesto del juego (y datos propios) si existen
-[ -f "$ROOT/quake/default.fmf" ] && cp "$ROOT/quake/default.fmf" stage/ || cp "$DROID/default.fmf" stage/
+# datos del juego (QuakeC, mapa, modelos, sonidos, cfg, manifiesto) generados por build_game.sh
+GAME="${GAME_OUT:-$ROOT/build/game}"
+[ -f "$GAME/progs.dat" ] || { echo "Falta $GAME (ejecuta quake/build_game.sh antes)"; exit 1; }
+cp -r "$GAME"/. stage/
 ( cd stage && zip -q -r -0 ../base.apk . )
 
 "$BTOOLS/zipalign" -p -f 4 base.apk aligned.apk
