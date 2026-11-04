@@ -19,7 +19,9 @@
 
 float t_down[T_MAXF];
 float t_role[T_MAXF];
-float t_have[T_MAXF];     // ya tenemos posicion de este dedo
+float t_rel[T_MAXF];      // se solto: se procesa en el siguiente comando de movimiento
+float t_ox[T_MAXF];       // donde empezo el toque
+float t_oy[T_MAXF];
 float t_x[T_MAXF];
 float t_y[T_MAXF];
 float t_sx[T_MAXF];       // origen de la palanca (flotante)
@@ -46,20 +48,21 @@ void() Touch_Init =
 // centro de cada boton segun el tamano de pantalla
 vector(float role) Touch_BtnPos =
 {
-	if (role == R_FIRE)   return [t_w - 64, t_h - 74, 0];
-	if (role == R_JUMP)   return [t_w - 54, t_h - 158, 0];
-	if (role == R_RELOAD) return [t_w - 146, t_h - 50, 0];
-	if (role == R_SWAP)   return [t_w - 150, t_h - 124, 0];
-	if (role == R_BUY)    return [t_w - 222, t_h - 90, 0];
+	if (role == R_FIRE)   return [t_w - 62, t_h - 70, 0];
+	if (role == R_JUMP)   return [t_w - 62, t_h - 150, 0];
+	if (role == R_RELOAD) return [t_w - 136, t_h - 46, 0];
+	if (role == R_SWAP)   return [t_w - 38, 44, 0];
+	if (role == R_BUY)    return [t_w - 134, t_h - 108, 0];
 	return '0 0 0';
 };
 
 float(float role) Touch_BtnRadius =
 {
-	if (role == R_FIRE) return 44;
-	if (role == R_JUMP) return 30;
-	if (role == R_BUY) return 34;
-	return 28;
+	if (role == R_FIRE) return 42;
+	if (role == R_JUMP) return 28;
+	if (role == R_BUY) return 30;
+	if (role == R_SWAP) return 22;
+	return 26;
 };
 
 float(float x, float y) Touch_Hit =
@@ -69,7 +72,7 @@ float(float x, float y) Touch_Hit =
 	for (r = R_FIRE; r <= R_SWAP; r++)
 	{
 		c = Touch_BtnPos(r);
-		if (vlen([x - c_x, y - c_y, 0]) < Touch_BtnRadius(r) + 10)
+		if (vlen([x - c_x, y - c_y, 0]) < Touch_BtnRadius(r) + 6)
 			return r;
 	}
 	return R_NONE;
@@ -99,9 +102,8 @@ void(float d) Touch_Assign =
 			r = R_LOOK;
 	}
 	t_role[d] = r;
-	if (r == R_RELOAD) t_impulse = 21;
-	else if (r == R_BUY) t_impulse = 20;
-	else if (r == R_SWAP) t_impulse = 10;
+	t_ox[d] = t_x[d];
+	t_oy[d] = t_y[d];
 };
 
 void(float d, float dx, float dy) Touch_Look =
@@ -125,12 +127,18 @@ void(float d, float x, float y) Touch_Move =
 	dy = y - t_y[d];
 	t_x[d] = x;
 	t_y[d] = y;
-	t_have[d] = TRUE;
 
-	if (!t_down[d]) return;
+	if (!t_down[d] || t_rel[d]) return;
 	if (t_role[d] == R_NONE)
-	{
+	{	// la primera posicion despues de tocar es la buena
 		Touch_Assign(d);
+		return;
+	}
+	// un boton de accion (recargar, comprar, cambiar) que se arrastra pasa a ser "mirar"
+	if (t_role[d] >= R_RELOAD && t_role[d] <= R_SWAP)
+	{
+		if (vlen([x - t_ox[d], y - t_oy[d], 0]) > 14)
+			t_role[d] = R_LOOK;
 		return;
 	}
 	if (t_role[d] == R_LOOK || t_role[d] == R_FIRE)
@@ -145,8 +153,6 @@ void(float d, float x, float y) Touch_Move =
 			over = (len - STICK_R) / len;
 			t_sx[d] = t_sx[d] + dx * over;
 			t_sy[d] = t_sy[d] + dy * over;
-			dx = x - t_sx[d];
-			dy = y - t_sy[d];
 		}
 	}
 };
@@ -171,16 +177,11 @@ float(float ie, float p1, float p2, float p3) Touch_Event =
 			if (ie == IE_KEYDOWN)
 			{
 				t_down[d] = TRUE;
+				t_rel[d] = FALSE;
 				t_role[d] = R_NONE;
-				if (t_have[d])
-					Touch_Assign(d);
 			}
-			else
-			{
-				t_down[d] = FALSE;
-				t_role[d] = R_NONE;
-				t_have[d] = FALSE;
-			}
+			else if (t_down[d])
+				t_rel[d] = TRUE;	// se suelta despues de procesar este comando (asi un toque rapido no se pierde)
 			return TRUE;
 		}
 	}
@@ -198,6 +199,7 @@ void() CSQC_Input_Frame =
 	for (i = 0; i < T_MAXF; i++)
 	{
 		if (!t_down[i]) continue;
+		if (t_role[i] == R_NONE) Touch_Assign(i);	// no llego posicion nueva: usamos la ultima conocida
 		if (t_role[i] == R_FIRE) fire = TRUE;
 		else if (t_role[i] == R_JUMP) jump = TRUE;
 		else if (t_role[i] == R_STICK)
@@ -215,6 +217,14 @@ void() CSQC_Input_Frame =
 			}
 		}
 	}
+	// botones de accion: se activan al soltar (si no se arrastraron)
+	for (i = 0; i < T_MAXF; i++)
+	{
+		if (!t_down[i] || !t_rel[i]) continue;
+		if (t_role[i] == R_RELOAD) t_impulse = 21;
+		else if (t_role[i] == R_BUY) t_impulse = 20;
+		else if (t_role[i] == R_SWAP) t_impulse = 10;
+	}
 	input_movevalues_x = input_movevalues_x - t_stick_y * 400;
 	input_movevalues_y = input_movevalues_y + t_stick_x * 400;
 	if (fire) input_buttons = input_buttons | 1;
@@ -223,6 +233,16 @@ void() CSQC_Input_Frame =
 	{
 		input_impulse = t_impulse;
 		t_impulse = 0;
+	}
+	// ya se aplico lo ultimo de los dedos que se soltaron
+	for (i = 0; i < T_MAXF; i++)
+	{
+		if (t_down[i] && t_rel[i])
+		{
+			t_down[i] = FALSE;
+			t_rel[i] = FALSE;
+			t_role[i] = R_NONE;
+		}
 	}
 };
 
