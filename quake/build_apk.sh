@@ -36,6 +36,10 @@ grep -n "VK_Init" fteqw/engine/gl/gl_viddroid.c
 perl -0pi -e 's/for \(i = 0; i < entry\.fname_len; i\+\+\)\s*\n(\s*)f->name\[i\] = \(entry\.fname\[i\]==\x27\\\\\x27\)\?\x27\/\x27:entry\.fname\[i\];/{ unsigned int j; for (j = 0; j < entry.fname_len; j++) f->name[j] = (entry.fname[j]==\x27\\\\\x27)?\x27\/\x27:entry.fname[j]; }/' fteqw/engine/common/fs_zip.c
 grep -c "unsigned int j; for (j = 0; j < entry.fname_len" fteqw/engine/common/fs_zip.c
 
+# Pantalla siempre horizontal desde el arranque (si no, el motor dibuja el juego girado/vertical)
+sed -i 's|android:name="com.fteqw.FTENativeActivity"|android:name="com.fteqw.FTENativeActivity" android:screenOrientation="sensorLandscape"|' fteqw/engine/droid/AndroidManifest.xml
+grep -n "screenOrientation" fteqw/engine/droid/AndroidManifest.xml
+
 echo "== Herramientas Android"
 PLATFORM="$(ls "$SDK/platforms" | grep -E '^android-[0-9]+$' | sort -t- -k2 -n | tail -1)"
 BT="$(ls "$SDK/build-tools" | sort -V | tail -1)"
