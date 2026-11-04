@@ -21,6 +21,7 @@ jobs:
       - name: Herramientas del motor (fteqcc + servidor de pruebas)
         run: |
           git clone --depth 1 https://github.com/fte-team/fteqw build/hostfte
+          perl -0pi -e 's/for \(i = 0; i < entry\.fname_len; i\+\+\)\s*\n(\s*)f->name\[i\] = \(entry\.fname\[i\]==\x27\\\\\x27\)\?\x27\/\x27:entry\.fname\[i\];/{ unsigned int j; for (j = 0; j < entry.fname_len; j++) f->name[j] = (entry.fname[j]==\x27\\\\\x27)?\x27\/\x27:entry.fname[j]; }/' build/hostfte/engine/common/fs_zip.c
           cmake -S build/hostfte -B build/hostfte/b -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS="-fcommon"
           cmake --build build/hostfte/b --target fteqcc fteqw-sv -j"$(nproc)"
           find build/hostfte/b -maxdepth 2 -type f \( -name fteqcc -o -name fteqw-sv \)
@@ -54,6 +55,13 @@ jobs:
 
       - name: Compilar APK
         run: bash quake/build_apk.sh
+
+      - name: Probar que el motor lee el APK firmado
+        run: |
+          SV="$(find $PWD/build/hostfte/b -maxdepth 2 -type f -name fteqw-sv | head -1)"
+          mkdir -p build/run3 && cd build/run3
+          timeout 25 "$SV" -nohome -basedir . -basepack ../apk/zombies.apk +set zm_test 1 +map zombies > log.txt 2>&1 || true
+          grep -a -q 'round 1 start' log.txt || { echo "El motor no pudo leer el APK firmado"; head -40 log.txt; exit 1; }
 
       - uses: actions/upload-artifact@v4
         with:

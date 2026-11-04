@@ -31,6 +31,11 @@ grep -n -A6 "ADD_LIBRARY(ftedroid" fteqw/CMakeLists.txt
 sed -i 's/VK_Init(info, extnames, VKVID_CreateSurface, NULL)/VK_Init(info, extnames, 1, VKVID_CreateSurface, NULL)/' fteqw/engine/gl/gl_viddroid.c
 grep -n "VK_Init" fteqw/engine/gl/gl_viddroid.c
 
+# Bug del lector de zip del motor: en el nombre UTF-8 reutiliza el contador "i" del bucle externo,
+# y los archivos META-INF que agrega apksigner (con bandera UTF-8) hacen que el APK firmado se lea "sin directorio central".
+perl -0pi -e 's/for \(i = 0; i < entry\.fname_len; i\+\+\)\s*\n(\s*)f->name\[i\] = \(entry\.fname\[i\]==\x27\\\\\x27\)\?\x27\/\x27:entry\.fname\[i\];/{ unsigned int j; for (j = 0; j < entry.fname_len; j++) f->name[j] = (entry.fname[j]==\x27\\\\\x27)?\x27\/\x27:entry.fname[j]; }/' fteqw/engine/common/fs_zip.c
+grep -c "unsigned int j; for (j = 0; j < entry.fname_len" fteqw/engine/common/fs_zip.c
+
 echo "== Herramientas Android"
 PLATFORM="$(ls "$SDK/platforms" | grep -E '^android-[0-9]+$' | sort -t- -k2 -n | tail -1)"
 BT="$(ls "$SDK/build-tools" | sort -V | tail -1)"
