@@ -16,6 +16,8 @@ echo "== Assets"
 python3 -I "$Q/assets/gen_sounds.py" "$G"
 python3 -I "$Q/assets/gen_textures.py" "$G"
 python3 -I "$Q/assets/gen_models.py" "$G"
+# sonidos reales (reemplazan a los sintetizados con el mismo nombre)
+cp -r "$Q/assets/sfx/." "$G/sound/"
 
 echo "== Mapa"
 W="$(mktemp -d)"
