@@ -178,10 +178,10 @@ void() PlayerPreThink =
 	if (self.zm_isbot) bot_think();
 
 	// regeneracion de vida (como en CoD: a los 5 s sin recibir dano)
-	if (self.health < 100 && time > self.zm_lasthurt + 5)
+	if (self.health < self.max_health && time > self.zm_lasthurt + 5)
 	{
 		self.health = self.health + frametime * 45;
-		if (self.health > 100) self.health = 100;
+		if (self.health > self.max_health) self.health = self.max_health;
 	}
 
 	if (self.zm_reload_end && time >= self.zm_reload_end)

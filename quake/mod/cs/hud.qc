@@ -12,6 +12,7 @@
 #define ST_PROMPT   (STAT_USER + 6)
 #define ST_KILLS    (STAT_USER + 7)
 #define ST_RELOAD   (STAT_USER + 8)
+#define ST_MAXHP    (STAT_USER + 9)
 #define ST_ROUND    (STAT_USER + 10)
 #define ST_LEFT     (STAT_USER + 11)
 #define ST_STATE    (STAT_USER + 12)
@@ -64,7 +65,7 @@ void(vector viewsize, vector c, float a) HudVignette =
 void(vector viewsize, float scoresshown) CSQC_DrawHud =
 {
 	local float pts, clip, res, wep, hit, hurt, kills, rnd, left, state, over, hp;
-	local float a, t, w, x, y;
+	local float a, t, w, x, y, mhp;
 	local string prompt;
 	local vector c;
 
@@ -80,6 +81,8 @@ void(vector viewsize, float scoresshown) CSQC_DrawHud =
 	state = getstatf(ST_STATE);
 	over = getstatf(ST_GAMEOVER);
 	hp = getstatf(STAT_HEALTH);
+	mhp = getstatf(ST_MAXHP);
+	if (mhp < 100) mhp = 100;
 	prompt = getstats(ST_PROMPT);
 
 	// ---- detectar cambios (anuncio de ronda, ganancia de puntos, impactos, danos)
@@ -136,9 +139,10 @@ void(vector viewsize, float scoresshown) CSQC_DrawHud =
 	w = 110;
 	drawfill([14, viewsize_y - 22, 0], [w + 4, 10, 0], '0 0 0', 0.55, 0);
 	c = '0.2 0.9 0.2';
-	if (hp < 60) c = '0.95 0.8 0.1';
-	if (hp < 30) c = '0.95 0.15 0.1';
-	if (hp > 0) drawfill([16, viewsize_y - 20, 0], [w * hp / 100, 6, 0], c, 0.9, 0);
+	if (hp < mhp * 0.6) c = '0.95 0.8 0.1';
+	if (hp < mhp * 0.3) c = '0.95 0.15 0.1';
+	if (hp > 0) drawfill([16, viewsize_y - 20, 0], [w * hp / mhp, 6, 0], c, 0.9, 0);
+	if (mhp > 100) drawstring([14, viewsize_y - 34, 0], "JUGGER-NOG", '6 6 0', '0.9 0.2 0.2', 0.9, 0);
 
 	// ---- ronda (numero grande rojo, abajo a la izquierda)
 	drawstring([14, viewsize_y - 62, 0], ftos(rnd), '30 30 0', '0.75 0.05 0.05', 0.95, 0);

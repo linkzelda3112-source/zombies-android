@@ -175,6 +175,7 @@ PLATES = {
     "zm_buy_smg":     ("KUDA SMG", "1000", (255, 190, 40), "smg"),
     "zm_buy_shotgun": ("TRENCH GUN", "1500", (230, 90, 60), "shotgun"),
     "zm_buy_rifle":   ("G-43 RIFLE", "2000", (90, 190, 255), "rifle"),
+    "zm_buy_jugger":  ("JUGGER-NOG", "2500", (220, 40, 40), "perk"),
 }
 
 
@@ -193,6 +194,8 @@ def tex_plate(name, rng):
         im.rect(50, 100, 200, 120, ink); im.rect(200, 106, 222, 114, ink); im.rect(110, 120, 126, 168, ink); im.rect(60, 120, 80, 150, ink)
     elif kind == "shotgun":
         im.rect(30, 108, 226, 120, ink); im.rect(30, 120, 140, 130, (150, 100, 60)); im.rect(70, 124, 110, 150, (150, 100, 60))
+    elif kind == "perk":
+        im.rect(100, 90, 156, 160, (190, 30, 30)); im.rect(108, 80, 148, 90, ink); im.rect(112, 110, 144, 140, (240, 240, 240))
     else:
         im.rect(30, 108, 130, 124, (150, 100, 60)); im.rect(130, 104, 226, 118, ink); im.rect(100, 100, 160, 108, ink)
     ts = 4 if len(title) <= 8 else 3

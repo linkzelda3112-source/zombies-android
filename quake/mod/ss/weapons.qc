@@ -170,6 +170,12 @@ void(entity p) Buy_Prompt =
 		return;
 	}
 	w = b.wep;
+	if (w == 10)
+	{
+		if (p.max_health > 100) p.zm_prompt = "";
+		else p.zm_prompt = "BUY JUGGER-NOG  [2500]";
+		return;
+	}
 	W_Load(w);
 	if (p.zm_own & WBit(w))
 		p.zm_prompt = strcat("BUY AMMO: ", w_name, "  [", ftos(w_ammocost), "]");
@@ -184,6 +190,22 @@ void(entity p) Buy_Try =
 	b = Buy_Near(p);
 	if (b == world) return;
 	w = b.wep;
+	if (w == 10)
+	{
+		// perk: vida maxima 250 (se pierde al morir)
+		if (p.max_health > 100) return;
+		if (p.zm_points < 2500)
+		{
+			sound(p, CHAN_ITEM, "misc/nobuy.wav", 1, ATTN_NORM);
+			return;
+		}
+		p.zm_points = p.zm_points - 2500;
+		p.max_health = 250;
+		p.health = 250;
+		sound(p, CHAN_ITEM, "misc/buy.wav", 1, ATTN_NORM);
+		bprint("ZM: bought perk jugger-nog\n");
+		return;
+	}
 	W_Load(w);
 	if (p.zm_own & WBit(w))
 	{
