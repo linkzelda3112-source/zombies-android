@@ -95,7 +95,7 @@ void(entity p) W_TraceHit =
 
 void(entity p) W_Fire =
 {
-	local float w, clip, i, sp;
+	local float w, clip, i, sp, spd;
 	local vector src, dir;
 	if (p.zm_sprinting) return;   // no se dispara corriendo
 	w = p.zm_cur;
@@ -132,8 +132,11 @@ void(entity p) W_Fire =
 	src = p.origin + p.view_ofs;
 	for (i = 0; i < w_pellets; i = i + 1)
 	{
-		sp = w_spread;
-		if (p.button6) sp = sp * 0.3;   // apuntar (gatillo izquierdo): menos dispersion
+		// sin apuntar: mucha mas dispersion (de cadera); apuntando: precision casi total
+		if (p.button6) sp = w_spread * 0.3;
+		else sp = w_spread + w_hip;
+		spd = vlen([p.velocity_x, p.velocity_y, 0]);
+		if (spd > 60) sp = sp * (1 + spd / 280 * 0.7);   // moverse abre la dispersion
 		if (p.zm_stance) sp = sp * 0.7;
 		dir = v_forward + v_right * (crandom() * sp) + v_up * (crandom() * sp);
 		dir = normalize(dir);

@@ -174,18 +174,61 @@ def zombie():
 def gun(kind):
     arm = Box(-14, 4, -9, -5, -13, -8, CLOTH)          # manga / antebrazo derecho
     hand = Box(3, 11, -9, -5, -13, -7, SKIN)
+    thumb = Box(8, 12, -5, -3.6, -9.5, -7.5, SKIN)     # pulgar sobre la empunadura
+    lhand = Box(14, 20, -3.5, 1, -12, -8, SKIN)        # mano de apoyo (delante)
+    lsleeve = Box(6, 14, -3.5, 1.2, -13, -9, CLOTH)
     if kind == "pistol":
-        parts = [Box(8, 20, -7, -4, -6, -3, METAL), Box(8, 13, -7, -4, -12, -6, METAL), Box(20, 22, -6.2, -4.8, -5.5, -3.5, LIGHT)]
+        parts = [Box(8, 20, -7, -4, -6, -3, METAL),            # corredera
+                 Box(8.5, 19.5, -6.6, -4.4, -3, -2.4, LIGHT),   # tapa / ranuras superiores
+                 Box(8, 13, -7, -4, -12, -6, METAL),            # empunadura
+                 Box(8.5, 12.5, -7.4, -3.6, -11.5, -7, WOOD),   # cachas
+                 Box(13, 19, -6.4, -4.6, -8.2, -6, METAL),      # armazon
+                 Box(13.5, 17, -6.2, -4.8, -9.6, -8.2, METAL),  # guardamonte
+                 Box(20, 22.5, -6.2, -4.8, -5.5, -3.5, LIGHT),  # canon
+                 Box(8, 9.5, -5.4, -5.0, -3.2, -2.4, LIGHT),    # mira trasera
+                 Box(19, 20, -5.4, -5.0, -3.0, -2.2, LIGHT),    # mira delantera
+                 Box(11.5, 13.2, -5.6, -5.0, -7, -6.3, LIGHT)]  # gatillo
     elif kind == "smg":
-        parts = [Box(6, 24, -7, -4, -7, -2, METAL), Box(24, 33, -6, -5, -5.5, -3.5, LIGHT), Box(12, 15, -6.5, -4.5, -15, -7, METAL),
-                 Box(7, 10, -7, -4, -12, -7, METAL), Box(-3, 6, -6.5, -4.5, -6, -2.5, WOOD)]
+        parts = [Box(6, 24, -7, -4, -7, -2, METAL),             # cuerpo
+                 Box(7, 23, -6.6, -4.4, -2, -1.2, LIGHT),        # riel superior
+                 Box(24, 33, -6, -5, -5.5, -3.5, LIGHT),         # canon
+                 Box(33, 36, -6.4, -4.6, -6, -3, METAL),         # supresor / freno
+                 Box(12, 15, -6.5, -4.5, -17, -7, METAL),        # cargador largo
+                 Box(11.5, 15.5, -6.8, -4.2, -17.6, -16.5, LIGHT),
+                 Box(7, 10, -7, -4, -12, -7, METAL),             # empunadura
+                 Box(-3, 6, -6.5, -4.5, -6, -2.5, WOOD),         # culata
+                 Box(-6, -3, -6.8, -4.2, -7, -2, METAL),         # contera
+                 Box(16, 22, -7.5, -3.5, -8, -7, WOOD),          # cubremanos
+                 Box(8, 11, -5.8, -5.2, -1.2, 0.6, LIGHT),       # mira
+                 Box(22, 23.2, -5.6, -5.0, -1.2, 0.2, LIGHT)]
     elif kind == "shotgun":
-        parts = [Box(8, 38, -6.5, -4.5, -5, -3, METAL), Box(8, 30, -6.5, -4.5, -7.5, -5, METAL), Box(16, 27, -7.5, -3.5, -9, -5, WOOD),
-                 Box(-8, 10, -7, -4, -9, -3, WOOD), Box(8, 14, -7, -4, -9, -4, METAL)]
+        parts = [Box(8, 38, -6.5, -4.5, -5, -3, METAL),         # canon superior
+                 Box(8, 30, -6.5, -4.5, -7.5, -5, METAL),        # tubo del cargador
+                 Box(38, 39.5, -6.2, -4.8, -4.8, -3.2, LIGHT),   # boca
+                 Box(30, 32, -6.9, -4.1, -8, -5, LIGHT),         # tapon
+                 Box(16, 27, -7.5, -3.5, -9, -5, WOOD),          # guardamano corredizo
+                 Box(17, 26, -7.8, -3.2, -9.4, -8.6, METAL),
+                 Box(-8, 10, -7, -4, -9, -3, WOOD),              # culata
+                 Box(-10, -8, -7.2, -3.8, -9.6, -2.6, METAL),    # cantonera
+                 Box(8, 14, -7, -4, -9, -4, METAL),              # recamara
+                 Box(8.5, 13, -7.6, -3.4, -6.5, -5.2, LIGHT),    # ventana de expulsion
+                 Box(37, 38, -5.8, -5.2, -3.2, -2.2, LIGHT)]     # mira
     else:
-        parts = [Box(-8, 12, -7, -4, -9, -3, WOOD), Box(10, 24, -7, -4, -6, -2.5, METAL), Box(24, 44, -6, -5, -5, -3.5, LIGHT),
-                 Box(14, 24, -7.5, -3.5, -9, -5.5, WOOD), Box(12, 20, -6.5, -4.5, -2.5, 0.5, LIGHT)]
-    boxes = [arm, hand] + parts
+        parts = [Box(-8, 12, -7, -4, -9, -3, WOOD),             # culata
+                 Box(-10, -8, -7.2, -3.8, -9.8, -2.4, METAL),
+                 Box(-2, 8, -6.2, -4.8, -3, -1.6, WOOD),          # carrillera
+                 Box(10, 24, -7, -4, -6, -2.5, METAL),           # caja del mecanismo
+                 Box(11, 22, -6.5, -4.5, -2.5, -1.5, LIGHT),     # cubierta
+                 Box(24, 44, -6, -5, -5, -3.5, LIGHT),           # canon
+                 Box(44, 46, -6.4, -4.6, -5.4, -3.1, METAL),     # freno de boca
+                 Box(14, 24, -7.5, -3.5, -9, -5.5, WOOD),        # guardamano
+                 Box(24, 34, -6.6, -4.4, -6.5, -5, WOOD),        # cubierta del canon
+                 Box(12, 20, -6.5, -4.5, -2.5, 0.5, LIGHT),      # mira telescopica
+                 Box(10.5, 12, -6.9, -4.1, -2.9, 0.9, METAL),
+                 Box(20, 21.5, -6.9, -4.1, -2.9, 0.9, METAL),
+                 Box(15, 18, -9.5, -7.5, -5, -3.6, METAL),       # cerrojo (palanca)
+                 Box(14, 17, -6.8, -4.2, -11, -9, METAL)]        # cargador
+    boxes = [arm, hand, thumb, lhand, lsleeve] + parts
     mesh = Mesh(boxes)
 
     def pose(dx=0.0, dz=0.0, pitch=0.0):

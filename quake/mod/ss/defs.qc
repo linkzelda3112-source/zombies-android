@@ -99,7 +99,7 @@ void() SUB_Remove =
 
 // ---- tabla de armas (se carga con W_Load) -----------------------------------
 float w_dmg, w_clip, w_resmax, w_pellets, w_auto, w_cost, w_ammocost;
-float w_rate, w_reload, w_spread;
+float w_rate, w_reload, w_spread, w_hip;
 string w_name, w_vmodel, w_snd;
 
 void(float w) W_Load =
@@ -108,25 +108,25 @@ void(float w) W_Load =
 	{
 		w_name = "KUDA SMG";     w_vmodel = "models/v_smg.md3";     w_snd = "weapons/smg.wav";
 		w_dmg = 22;  w_clip = 30; w_resmax = 150; w_pellets = 1; w_auto = TRUE;
-		w_rate = 0.085; w_reload = 2.1; w_spread = 0.035; w_cost = 1000; w_ammocost = 500;
+		w_rate = 0.085; w_reload = 2.1; w_spread = 0.035; w_hip = 0.05; w_cost = 1000; w_ammocost = 500;
 	}
 	else if (w == W_SHOTGUN)
 	{
 		w_name = "TRENCH GUN";   w_vmodel = "models/v_shotgun.md3"; w_snd = "weapons/shotgun.wav";
 		w_dmg = 16;  w_clip = 6;  w_resmax = 36;  w_pellets = 8; w_auto = FALSE;
-		w_rate = 0.85;  w_reload = 2.8; w_spread = 0.085; w_cost = 1500; w_ammocost = 750;
+		w_rate = 0.85;  w_reload = 2.8; w_spread = 0.085; w_hip = 0.035; w_cost = 1500; w_ammocost = 750;
 	}
 	else if (w == W_RIFLE)
 	{
 		w_name = "G-43 RIFLE";   w_vmodel = "models/v_rifle.md3";   w_snd = "weapons/rifle.wav";
 		w_dmg = 95;  w_clip = 10; w_resmax = 60;  w_pellets = 1; w_auto = FALSE;
-		w_rate = 0.5;   w_reload = 2.3; w_spread = 0.004; w_cost = 2000; w_ammocost = 1000;
+		w_rate = 0.5;   w_reload = 2.3; w_spread = 0.004; w_hip = 0.055; w_cost = 2000; w_ammocost = 1000;
 	}
 	else
 	{
 		w_name = "M1911";        w_vmodel = "models/v_pistol.md3";  w_snd = "weapons/pistol.wav";
 		w_dmg = 30;  w_clip = 8;  w_resmax = 40;  w_pellets = 1; w_auto = FALSE;
-		w_rate = 0.25;  w_reload = 1.6; w_spread = 0.006; w_cost = 0; w_ammocost = 500;
+		w_rate = 0.25;  w_reload = 1.6; w_spread = 0.006; w_hip = 0.03; w_cost = 0; w_ammocost = 500;
 	}
 };
 
