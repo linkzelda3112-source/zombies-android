@@ -139,16 +139,16 @@ def build():
         ents.append({"classname": "zm_buy", "origin": org, "wep": str(wep)})
     for x in (-480, -160, 160, 480):
         for y in (-480, -160, 160, 480):
-            ents.append({"classname": "light", "origin": "%d %d 224" % (x, y), "light": "520"})
+            ents.append({"classname": "light", "origin": "%d %d 224" % (x, y), "light": "300"})
     for sx in (1, -1):
         for sy in (1, -1):
-            ents.append({"classname": "light", "origin": "%d %d 200" % (sx * 570, sy * 570), "light": "420"})
+            ents.append({"classname": "light", "origin": "%d %d 200" % (sx * 570, sy * 570), "light": "230"})
     return brushes, ents
 
 
 def main(path):
     brushes, ents = build()
-    out = ["// Zombies - arena generada por gen_map.py", "{", '"mapversion" "220"', '"classname" "worldspawn"', '"wad" "zm.wad"', '"_minlight" "110"', '"message" "Zombies"']
+    out = ["// Zombies - arena generada por gen_map.py", "{", '"mapversion" "220"', '"classname" "worldspawn"', '"wad" "zm.wad"', '"_minlight" "38"', '"message" "Zombies"']
     for b in brushes:
         out.append(b.text())
     out.append("}")

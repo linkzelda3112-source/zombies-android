@@ -121,10 +121,20 @@ void(vector viewsize, float scoresshown) CSQC_DrawHud =
 	y = viewsize_y * 0.5;
 	if (!over)
 	{
-		drawfill([x - 9, y - 0.5, 0], '5 1 0', '1 1 1', 0.8, 0);
-		drawfill([x + 4, y - 0.5, 0], '5 1 0', '1 1 1', 0.8, 0);
-		drawfill([x - 0.5, y - 9, 0], '1 5 0', '1 1 1', 0.8, 0);
-		drawfill([x - 0.5, y + 4, 0], '1 5 0', '1 1 1', 0.8, 0);
+		if (t_ads)
+		{
+			drawfill([x - 5, y - 0.5, 0], '3 1 0', '1 1 1', 0.9, 0);
+			drawfill([x + 2, y - 0.5, 0], '3 1 0', '1 1 1', 0.9, 0);
+			drawfill([x - 0.5, y - 5, 0], '1 3 0', '1 1 1', 0.9, 0);
+			drawfill([x - 0.5, y + 2, 0], '1 3 0', '1 1 1', 0.9, 0);
+		}
+		else
+		{
+			drawfill([x - 9, y - 0.5, 0], '5 1 0', '1 1 1', 0.8, 0);
+			drawfill([x + 4, y - 0.5, 0], '5 1 0', '1 1 1', 0.8, 0);
+			drawfill([x - 0.5, y - 9, 0], '1 5 0', '1 1 1', 0.8, 0);
+			drawfill([x - 0.5, y + 4, 0], '1 5 0', '1 1 1', 0.8, 0);
+		}
 		a = 1 - (time - hud_hit_t) * 6;
 		if (a > 0 && hud_hit_t > 0)
 		{

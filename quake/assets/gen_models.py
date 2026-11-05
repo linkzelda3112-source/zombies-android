@@ -11,6 +11,7 @@ import math, os, random, struct, sys
 # region de textura (u0,v0,u1,v1) en una imagen de 64x64
 SKIN, SHIRT, PANTS, FACE = (1, 1, 30, 14), (1, 17, 30, 30), (1, 33, 30, 46), (33, 1, 62, 30)
 METAL, WOOD, LIGHT, CLOTH = (1, 1, 14, 14), (17, 1, 30, 14), (33, 1, 46, 14), (49, 1, 62, 14)
+RAGS, RIBS, BONE = (1, 49, 30, 62), (33, 33, 46, 46), (49, 33, 62, 46)   # solo zombie
 
 # caras: indices de esquinas (0..7) y normal local
 CORNERS = [(-1, -1, -1), (1, -1, -1), (1, 1, -1), (-1, 1, -1), (-1, -1, 1), (1, -1, 1), (1, 1, 1), (-1, 1, 1)]
@@ -128,6 +129,12 @@ def zombie():
         Box(0, 20, -14, -9, 13, 19, SHIRT),         # 5 brazo derecho
         Box(20, 25, 9, 14, 13, 19, SKIN),           # 6 mano izquierda
         Box(20, 25, -14, -9, 13, 19, SKIN),         # 7 mano derecha
+        Box(-2, 2, -2.5, 2.5, 19.5, 23, SKIN),      # 8 cuello
+        Box(0.5, 5.2, -3.6, 3.6, 17.5, 21.5, BONE, {0: FACE}),   # 9 mandibula colgando
+        Box(-6, 6.5, -9.8, 9.8, -7, 2, RAGS),       # 10 camisa rota (faldon)
+        Box(5, 5.8, -4.5, 4, 5, 16, RIBS),          # 11 costillas expuestas
+        Box(-6, -4, -10.5, 10.5, 15, 21, RAGS),     # 12 hombros/espalda andrajosos
+        Box(6, 11, 9.5, 13.5, 13.5, 18.5, RAGS),    # 13 manga rota izq
     ]
     mesh = Mesh(boxes)
     hip, sh_l, sh_r = (0, 0, 0), (0, 11.5, 18), (0, -11.5, 18)
@@ -147,7 +154,10 @@ def zombie():
         torso = comp(body, glob)
         armL = comp(sh_up(sh_l, arm), body, glob)
         armR = comp(sh_up(sh_r, arm), body, glob)
-        return [legL, legR, torso, torso, armL, armR, armL, armR]
+        headT = comp(sh_up((0, 0, 21), 20), body, glob)          # cabeza caida hacia delante
+        jawT = comp(sh_up((0, 0, 21), 20 + 14 + 8 * math.sin(bob * 3)), body, glob)
+        sleeve = comp(sh_up(sh_l, arm * 0.5), body, glob)
+        return [legL, legR, torso, headT, armL, armR, armL, armR, torso, jawT, torso, torso, torso, sleeve]
 
     frames = []
     for i in range(8):                               # caminar
@@ -206,20 +216,59 @@ def region_fill(px, r, color, rng, grain=10):
             px[y * 64 + x] = tuple(max(0, min(255, int(c + n))) for c in color)
 
 
+def splat(px, r, rng, n, color, size=(1, 4)):
+    u0, v0, u1, v1 = r
+    for _ in range(n):
+        cx, cy = rng.randint(u0, u1), rng.randint(v0, v1)
+        rad = rng.randint(*size)
+        for y in range(cy - rad, cy + rad + 1):
+            for x in range(cx - rad, cx + rad + 1):
+                if u0 <= x <= u1 and v0 <= y <= v1 and (x - cx) ** 2 + (y - cy) ** 2 <= rad * rad:
+                    k = rng.uniform(0.8, 1.1)
+                    px[y * 64 + x] = tuple(max(0, min(255, int(c * k))) for c in color)
+
+
 def make_textures(outdir):
     rng = random.Random(5)
     z = [(0, 0, 0)] * 4096
-    region_fill(z, SKIN, (110, 140, 95), rng)
-    region_fill(z, SHIRT, (92, 70, 52), rng, 14)
-    region_fill(z, PANTS, (52, 58, 78), rng, 10)
-    region_fill(z, FACE, (112, 142, 96), rng, 8)
-    for ex in (40, 53):                                  # ojos rojos y boca
-        for y in range(10, 14):
-            for x in range(ex, ex + 4):
-                z[y * 64 + x] = (255, 40, 30)
-    for y in range(20, 24):
-        for x in range(40, 56):
-            z[y * 64 + x] = (50, 20, 20)
+    region_fill(z, SKIN, (138, 154, 120), rng, 9)           # piel gris verdosa
+    splat(z, SKIN, rng, 14, (70, 86, 74), (1, 3))          # venas / moretones
+    splat(z, SKIN, rng, 9, (95, 20, 16), (1, 3))           # sangre
+    region_fill(z, SHIRT, (128, 112, 90), rng, 14)           # camisa sucia
+    splat(z, SHIRT, rng, 16, (118, 24, 20), (1, 4))        # manchas de sangre
+    splat(z, SHIRT, rng, 8, (30, 24, 20), (1, 3))          # agujeros / mugre
+    region_fill(z, PANTS, (74, 84, 108), rng, 10)
+    splat(z, PANTS, rng, 10, (28, 30, 38), (1, 3))
+    splat(z, PANTS, rng, 6, (100, 22, 18), (1, 3))
+    region_fill(z, FACE, (134, 150, 118), rng, 8)
+    region_fill(z, RAGS, (96, 82, 66), rng, 16)
+    splat(z, RAGS, rng, 14, (22, 18, 16), (1, 3))
+    splat(z, RAGS, rng, 8, (110, 24, 20), (1, 3))
+    region_fill(z, RIBS, (150, 90, 84), rng, 10)
+    for yy in range(RIBS[1], RIBS[3], 3):                  # costillas
+        for xx in range(RIBS[0], RIBS[2]):
+            z[yy * 64 + xx] = (205, 195, 170)
+            z[(yy + 1) * 64 + xx] = (60, 18, 16)
+    region_fill(z, BONE, (170, 164, 140), rng, 8)
+    splat(z, BONE, rng, 6, (110, 26, 20), (1, 3))
+    # cara: ojos hundidos con brillo, nariz, boca con dientes y barbilla ensangrentada
+    for ex in (38, 51):
+        for y in range(8, 14):
+            for x in range(ex, ex + 6):
+                z[y * 64 + x] = (22, 14, 12)
+        for y in range(10, 13):
+            for x in range(ex + 1, ex + 5):
+                z[y * 64 + x] = (255, 200, 40)
+    for y in range(15, 19):
+        for x in range(46, 49):
+            z[y * 64 + x] = (60, 70, 55)
+    for y in range(21, 26):
+        for x in range(38, 58):
+            z[y * 64 + x] = (40, 12, 12)
+    for x in range(38, 58, 3):
+        for y in (21, 22):
+            z[y * 64 + x] = (225, 220, 195)
+    splat(z, (36, 22, 60, 29), rng, 10, (120, 18, 14), (1, 3))
     save_tga(os.path.join(outdir, "models", "zombie.tga"), 64, 64, z)
     g = [(0, 0, 0)] * 4096
     region_fill(g, METAL, (46, 48, 54), rng, 6)

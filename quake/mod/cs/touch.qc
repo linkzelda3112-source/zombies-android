@@ -14,6 +14,7 @@
 #define R_SWAP      7
 #define R_MELEE     8
 #define R_SLIDE     9
+#define R_ADS       10
 
 #define K_TOUCH_A       600
 #define K_TOUCH_B       603
@@ -42,6 +43,8 @@ void(float imp) Act =
 	t_actframes = 4;
 };
 float t_inited;
+float t_ads;               // apuntando
+float t_fov, t_basefov;
 string dbg_txt;
 float dbg_t;
 float t_mode;              // 0 = tactil, 1 = control (mando)
@@ -57,6 +60,10 @@ float pad_sprint;                        // L3 alterna correr
 void() Touch_Init =
 {
 	t_inited = TRUE;
+	t_basefov = cvar("fov");
+	if (t_basefov < 60 || t_basefov > 120) t_basefov = 90;
+	t_fov = t_basefov;
+	precache_pic("gfx/touch_ads.tga");
 	precache_pic("gfx/touch_fire.tga");
 	precache_pic("gfx/touch_reload.tga");
 	precache_pic("gfx/touch_buy.tga");
@@ -76,6 +83,7 @@ vector(float role) Touch_BtnPos =
 	if (role == R_SWAP)   return [t_w - 38, 44, 0];
 	if (role == R_MELEE)  return [t_w - 38, 98, 0];
 	if (role == R_SLIDE)  return [t_w - 196, t_h - 62, 0];
+	if (role == R_ADS)    return [t_w - 132, t_h - 170, 0];
 	if (role == R_BUY)    return [t_w - 134, t_h - 108, 0];
 	return '0 0 0';
 };
@@ -87,6 +95,7 @@ float(float role) Touch_BtnRadius =
 	if (role == R_BUY) return 30;
 	if (role == R_SWAP || role == R_MELEE) return 22;
 	if (role == R_SLIDE) return 26;
+	if (role == R_ADS) return 28;
 	return 26;
 };
 
@@ -94,7 +103,7 @@ float(float x, float y) Touch_Hit =
 {
 	local float r;
 	local vector c;
-	for (r = R_FIRE; r <= R_SLIDE; r++)
+	for (r = R_FIRE; r <= R_ADS; r++)
 	{
 		c = Touch_BtnPos(r);
 		if (vlen([x - c_x, y - c_y, 0]) < Touch_BtnRadius(r) + 6)
@@ -137,6 +146,7 @@ void(float d, float dx, float dy) Touch_Look =
 	local float s;
 	s = cvar("zm_looksens");
 	if (s <= 0) s = 0.22;
+	if (t_basefov > 0) s = s * (t_fov / t_basefov);   // menos sensibilidad al apuntar
 	a = getviewprop(VF_CL_VIEWANGLES);
 	a_y = a_y - dx * s;
 	a_x = a_x + dy * s * 0.85;
@@ -315,8 +325,8 @@ void() Pad_Frame =
 		dt = input_timelength;
 		if (dt <= 0 || dt > 0.1) dt = 0.016;
 		a = getviewprop(VF_CL_VIEWANGLES);
-		a_y = a_y - rx * 230 * dt;
-		a_x = a_x + ry * 170 * dt;
+		a_y = a_y - rx * 230 * dt * (t_fov / t_basefov);
+		a_x = a_x + ry * 170 * dt * (t_fov / t_basefov);
 		if (a_x > 80) a_x = 80;
 		if (a_x < -80) a_x = -80;
 		setviewprop(VF_CL_VIEWANGLES, a);
@@ -339,9 +349,10 @@ void() Pad_Frame =
 // lo llama el motor en cada comando de movimiento: aqui metemos movimiento y botones
 void() CSQC_Input_Frame =
 {
-	local float i, fire, jump, dx, dy, len, mag;
+	local float i, fire, jump, dx, dy, len, mag, ads, tf;
 	fire = FALSE;
 	jump = FALSE;
+	ads = FALSE;
 	t_stick_x = 0;
 	t_stick_y = 0;
 	for (i = 0; i < T_MAXF; i++)
@@ -351,6 +362,7 @@ void() CSQC_Input_Frame =
 		if (t_role[i] == R_FIRE) fire = TRUE;
 		else if (t_role[i] == R_JUMP) jump = TRUE;
 		else if (t_role[i] == R_SLIDE) input_buttons = input_buttons | 8;
+		else if (t_role[i] == R_ADS) { input_buttons = input_buttons | 32; ads = TRUE; }
 		else if (t_role[i] == R_STICK)
 		{
 			dx = t_x[i] - t_sx[i];
@@ -376,7 +388,10 @@ void() CSQC_Input_Frame =
 		else if (t_role[i] == R_MELEE) Act(22);
 	}
 	if (t_mode == 1)
+	{
 		Pad_Frame();
+		if (input_buttons & 32) ads = TRUE;
+	}
 	else if (t_stick_y < -0.5 && fabs(t_stick_x) < 0.6 && sqrt(t_stick_x * t_stick_x + t_stick_y * t_stick_y) > 0.93)
 		input_buttons = input_buttons | 4;       // palanca a tope hacia adelante = correr
 	input_movevalues_x = input_movevalues_x - t_stick_y * 400;
@@ -389,6 +404,19 @@ void() CSQC_Input_Frame =
 		input_buttons = input_buttons | t_act;
 		t_actframes = t_actframes - 1;
 		if (t_actframes <= 0) t_act = 0;
+	}
+	// zoom al apuntar (suave)
+	t_ads = ads;
+	tf = ads ? 58 : t_basefov;
+	if (fabs(tf - t_fov) > 0.3)
+	{
+		t_fov = t_fov + (tf - t_fov) * 0.3;
+		cvar_set("fov", ftos(rint(t_fov * 10) / 10));
+	}
+	else if (t_fov != tf)
+	{
+		t_fov = tf;
+		cvar_set("fov", ftos(t_fov));
 	}
 	// ya se aplico lo ultimo de los dedos que se soltaron
 	for (i = 0; i < T_MAXF; i++)
@@ -435,6 +463,7 @@ void(vector viewsize, float buyready) Touch_Draw =
 	Touch_DrawBtn(R_SWAP, "gfx/touch_swap.tga", 0.45, '1 1 1');
 	Touch_DrawBtn(R_MELEE, "gfx/touch_melee.tga", 0.45, '1 1 1');
 	Touch_DrawBtn(R_SLIDE, "gfx/touch_slide.tga", 0.45, '1 1 1');
+	Touch_DrawBtn(R_ADS, "gfx/touch_ads.tga", 0.45, '1 1 1');
 	if (buyready)
 		Touch_DrawBtn(R_BUY, "gfx/touch_buy.tga", 0.95, '1 1 0.4');
 	else
