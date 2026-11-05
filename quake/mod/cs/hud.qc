@@ -17,6 +17,8 @@
 #define ST_LEFT     (STAT_USER + 11)
 #define ST_STATE    (STAT_USER + 12)
 #define ST_GAMEOVER (STAT_USER + 13)
+#define ST_GUMNAME  (STAT_USER + 14)
+#define ST_GUMLEFT  (STAT_USER + 15)
 
 float hud_round;       // ultima ronda vista (para anunciar la nueva)
 float hud_round_t;     // cuando cambio
@@ -175,6 +177,17 @@ void(vector viewsize, float scoresshown) CSQC_DrawHud =
 	// ---- zombies que faltan (arriba a la derecha)
 	if (left > 0)
 		HudRight(viewsize_x - 14, 14, strcat("ZOMBIES  ", ftos(left)), '8 8 0', '0.9 0.6 0.6', 0.85);
+
+	// ---- chicle activo (arriba al centro)
+	if (getstatf(ST_GUMLEFT) > 0 && getstats(ST_GUMNAME) != "" && !over)
+	{
+		w = stringwidth(getstats(ST_GUMNAME), FALSE, '9 9 0');
+		drawfill([(viewsize_x - w) * 0.5 - 8, 10, 0], [w + 16, 28, 0], '0.35 0.05 0.45', 0.55, 0);
+		HudCenter(viewsize, 12, "MEGA GOBBLEGUM", '7 7 0', '1 0.7 1', 1);
+		HudCenter(viewsize, 24, getstats(ST_GUMNAME), '9 9 0', '1 1 1', 1);
+		if (getstatf(ST_GUMLEFT) < 30 && getstatf(ST_GUMLEFT) > 6)
+			HudCenter(viewsize, 40, strcat(ftos(floor(getstatf(ST_GUMLEFT))), "s"), '8 8 0', '1 0.9 0.5', 0.9);
+	}
 
 	// ---- aviso de compra
 	if (prompt != "" && !over)

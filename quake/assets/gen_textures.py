@@ -176,6 +176,7 @@ PLATES = {
     "zm_buy_shotgun": ("TRENCH GUN", "1500", (230, 90, 60), "shotgun"),
     "zm_buy_rifle":   ("G-43 RIFLE", "2000", (90, 190, 255), "rifle"),
     "zm_buy_jugger":  ("JUGGER-NOG", "2500", (220, 40, 40), "perk"),
+    "zm_buy_gum":     ("GOBBLEGUM", "500", (230, 80, 220), "gum"),
 }
 
 
@@ -196,6 +197,22 @@ def tex_plate(name, rng):
         im.rect(30, 108, 226, 120, ink); im.rect(30, 120, 140, 130, (150, 100, 60)); im.rect(70, 124, 110, 150, (150, 100, 60))
     elif kind == "perk":
         im.rect(100, 90, 156, 160, (190, 30, 30)); im.rect(108, 80, 148, 90, ink); im.rect(112, 110, 144, 140, (240, 240, 240))
+    elif kind == "gum":
+        cols = [(255, 70, 70), (70, 200, 255), (255, 220, 60), (120, 255, 120), (255, 140, 40), (220, 110, 255)]
+        cx, cy, R = 128, 112, 50
+        for y in range(cy - R, cy + R):
+            for x in range(cx - R, cx + R):
+                d2 = (x - cx) ** 2 + (y - cy) ** 2
+                if d2 <= R * R:
+                    im.set(x, y, (60, 70, 90))
+        for n in range(26):
+            bx, by = cx + int(34 * math.cos(n * 2.4) * ((n % 5 + 1) / 5.0)), cy + int(30 * math.sin(n * 1.7) * ((n % 4 + 1) / 4.0))
+            c = cols[n % len(cols)]
+            for y in range(by - 8, by + 9):
+                for x in range(bx - 8, bx + 9):
+                    if (x - bx) ** 2 + (y - by) ** 2 <= 64 and (x - cx) ** 2 + (y - cy) ** 2 <= (R - 3) ** 2:
+                        im.set(x, y, shade(c, 1.0 if x - bx + y - by < 3 else 0.7))
+        im.rect(cx - 12, cy + R, cx + 12, cy + R + 10, (190, 40, 190))
     else:
         im.rect(30, 108, 130, 124, (150, 100, 60)); im.rect(130, 104, 226, 118, ink); im.rect(100, 100, 160, 108, ink)
     ts = 4 if len(title) <= 8 else 3

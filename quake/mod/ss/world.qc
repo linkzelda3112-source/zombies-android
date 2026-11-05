@@ -85,6 +85,8 @@ void() worldspawn =
 	clientstat(STAT_USER + 7, EV_FLOAT, zm_kills);
 	clientstat(STAT_USER + 8, EV_FLOAT, zm_reloading);
 	clientstat(STAT_USER + 9, EV_FLOAT, max_health);
+	clientstat(STAT_USER + 14, EV_STRING, zm_gumname);
+	clientstat(STAT_USER + 15, EV_FLOAT, zm_gumleft);
 	globalstat(STAT_USER + 10, EV_FLOAT, "zm_round");
 	globalstat(STAT_USER + 11, EV_FLOAT, "zm_left");
 	globalstat(STAT_USER + 12, EV_FLOAT, "zm_state");

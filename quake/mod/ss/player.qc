@@ -22,6 +22,7 @@ void(entity targ, entity attacker, float dmg, float head) Hurt =
 	if (targ.classname == "zombie")
 	{
 		if (targ.health <= 0) return;
+		if (attacker.classname == "player" && attacker.zm_gum_insta > time) dmg = targ.health + 1;
 		targ.health = targ.health - dmg;
 		if (attacker.classname == "player")
 		{
@@ -142,6 +143,11 @@ void() PutClientInServer =
 	self.view_ofs = '0 0 22';
 	self.zm_stance = 0;
 	self.zm_sprinting = 0;
+	self.zm_gum_insta = 0;
+	self.zm_gum_free = 0;
+	self.zm_gum_end = 0;
+	self.zm_gum_uses = 0;
+	self.zm_gumname = "";
 	self.zm_slide_end = 0;
 	self.velocity = '0 0 0';
 	self.effects = 0;
@@ -270,6 +276,9 @@ void() PlayerPreThink =
 
 	if (self.zm_isbot) bot_think();
 	Move_Update(self);
+	self.zm_gumleft = self.zm_gum_end - time;
+	if (self.zm_gumleft < 0) self.zm_gumleft = 0;
+	if (self.zm_gumleft <= 0) self.zm_gumname = "";
 
 	// regeneracion de vida (como en CoD: a los 5 s sin recibir dano)
 	if (self.health < self.max_health && time > self.zm_lasthurt + 5)

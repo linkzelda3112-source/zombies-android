@@ -68,6 +68,12 @@ float zm_botspawned;
 .float zm_slide_start;
 .vector zm_slidedir;
 .float zm_sprinting;
+.float zm_gum_insta;   // hasta cuando dura Kill Joy (muerte instantanea)
+.float zm_gum_free;    // hasta cuando dura Free Fire (municion infinita)
+.float zm_gum_end;     // hasta cuando se muestra el chicle en el HUD
+.float zm_gum_uses;    // chicles comprados
+.float zm_gumleft;     // segundos restantes (espejo para el HUD)
+.string zm_gumname;    // nombre del chicle (espejo para el HUD)
 .float zm_nextmelee;
 .float zm_b4;
 .string zm_prompt;

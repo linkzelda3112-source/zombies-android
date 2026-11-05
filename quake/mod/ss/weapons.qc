@@ -114,7 +114,7 @@ void(entity p) W_Fire =
 		}
 		return;
 	}
-	SetClip(p, w, clip - 1);
+	if (p.zm_gum_free <= time) SetClip(p, w, clip - 1);
 	p.zm_nextshot = time + w_rate;
 	sound(p, CHAN_WEAPON, w_snd, 1, ATTN_NORM);
 	p.weaponframe = 1;
@@ -166,6 +166,62 @@ entity(entity p) Buy_Near =
 	return best;
 };
 
+float(entity p) Gum_Cost =
+{
+	local float c;
+	c = 500 + 250 * p.zm_gum_uses;
+	if (c > 2000) c = 2000;
+	return c;
+};
+
+// chicle MEGA aleatorio (maquina de chicles estilo BO3)
+void(entity p) Gum_Roll =
+{
+	local float g, k;
+	local vector o;
+	g = floor(random() * 5);
+	if (g > 4) g = 4;
+	if (g == 0)
+	{
+		p.zm_gumname = "KILL JOY  -  INSTA-KILL";
+		p.zm_gum_insta = time + 25;
+		p.zm_gum_end = p.zm_gum_insta;
+	}
+	else if (g == 1)
+	{
+		p.zm_gumname = "FREE FIRE  -  INFINITE AMMO";
+		p.zm_gum_free = time + 30;
+		p.zm_gum_end = p.zm_gum_free;
+	}
+	else if (g == 2)
+	{
+		p.zm_gumname = "PERKAHOLIC  -  JUGGER-NOG";
+		p.max_health = 250;
+		p.health = 250;
+		p.zm_gum_end = time + 5;
+	}
+	else if (g == 3)
+	{
+		p.zm_gumname = "ROUND ROBBIN'  -  +1600 POINTS";
+		p.zm_points = p.zm_points + 1600;
+		p.zm_gum_end = time + 5;
+	}
+	else
+	{
+		p.zm_gumname = "ANYWHERE BUT HERE  -  TELEPORT";
+		k = floor(random() * 4);
+		if (k > 3) k = 3;
+		o = '300 300 28';
+		if (k == 1) o = '-300 300 28';
+		else if (k == 2) o = '-300 -300 28';
+		else if (k == 3) o = '300 -300 28';
+		setorigin(p, o);
+		p.velocity = '0 0 0';
+		p.zm_gum_end = time + 5;
+	}
+	bprint(strcat("ZM: gobblegum ", p.zm_gumname, "\n"));
+};
+
 void(entity p) Buy_Prompt =
 {
 	local entity b;
@@ -183,6 +239,11 @@ void(entity p) Buy_Prompt =
 		else p.zm_prompt = "BUY JUGGER-NOG  [2500]";
 		return;
 	}
+	if (w == 11)
+	{
+		p.zm_prompt = strcat("GOBBLEGUM MACHINE  [", ftos(Gum_Cost(p)), "]");
+		return;
+	}
 	W_Load(w);
 	if (p.zm_own & WBit(w))
 		p.zm_prompt = strcat("BUY AMMO: ", w_name, "  [", ftos(w_ammocost), "]");
@@ -197,6 +258,20 @@ void(entity p) Buy_Try =
 	b = Buy_Near(p);
 	if (b == world) return;
 	w = b.wep;
+	if (w == 11)
+	{
+		cost = Gum_Cost(p);
+		if (p.zm_points < cost)
+		{
+			sound(p, CHAN_ITEM, "misc/nobuy.wav", 1, ATTN_NORM);
+			return;
+		}
+		p.zm_points = p.zm_points - cost;
+		p.zm_gum_uses = p.zm_gum_uses + 1;
+		sound(p, CHAN_ITEM, "misc/buy.wav", 1, ATTN_NORM);
+		Gum_Roll(p);
+		return;
+	}
 	if (w == 10)
 	{
 		// perk: vida maxima 250 (se pierde al morir)
