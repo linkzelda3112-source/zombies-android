@@ -30,7 +30,17 @@ float t_sx[T_MAXF];       // origen de la palanca (flotante)
 float t_sy[T_MAXF];
 float t_w, t_h;           // tamano virtual de pantalla
 float t_stick_x, t_stick_y;
-float t_impulse;
+float t_act;               // botones de accion pendientes
+float t_actframes;
+
+void(float imp) Act =
+{
+	if (imp == 21) t_act = t_act | 16;
+	else if (imp == 22) t_act = t_act | 64;
+	else if (imp == 10) t_act = t_act | 128;
+	else if (imp == 23 || imp == 20) t_act = t_act | 144;
+	t_actframes = 4;
+};
 float t_inited;
 string dbg_txt;
 float dbg_t;
@@ -216,12 +226,12 @@ float(float ie, float p1, float p2) Pad_Event =
 	else if (p1 == K_GP_LTRIGGER) pad_ltk = down;
 	else if (down)
 	{
-		if (p1 == K_GP_X) t_impulse = 23;                         // usar / comprar / recargar
-		else if (p1 == K_GP_Y) t_impulse = 10;                    // cambiar arma
-		else if (p1 == K_GP_RTHUMB || p1 == K_GP_RSHOULDER) t_impulse = 22;   // cuchillada
-		else if (p1 == K_GP_LSHOULDER) t_impulse = 21;            // recargar
+		if (p1 == K_GP_X) Act(23);                         // usar / comprar / recargar
+		else if (p1 == K_GP_Y) Act(10);                    // cambiar arma
+		else if (p1 == K_GP_RTHUMB || p1 == K_GP_RSHOULDER) Act(22);   // cuchillada
+		else if (p1 == K_GP_LSHOULDER) Act(21);            // recargar
 		else if (p1 == K_GP_LTHUMB) pad_sprint = !pad_sprint;     // correr (alterna)
-		else if (p1 == K_GP_DPAD_UP || p1 == K_GP_DPAD_RIGHT) t_impulse = 10;
+		else if (p1 == K_GP_DPAD_UP || p1 == K_GP_DPAD_RIGHT) Act(10);
 	}
 	return TRUE;
 };
@@ -319,7 +329,7 @@ void() Pad_Frame =
 	// correr como en BO3: L3 lo activa; se corta al soltar la palanca, disparar, apuntar, recargar o dar cuchillada
 	if (pad_sprint)
 	{
-		if (ly < -0.3 && !(input_buttons & 33) && t_impulse != 21 && t_impulse != 22 && t_impulse != 23)
+		if (ly < -0.3 && !(input_buttons & 33) && !(t_act & 208))
 			input_buttons = input_buttons | 4;
 		else
 			pad_sprint = FALSE;
@@ -360,10 +370,10 @@ void() CSQC_Input_Frame =
 	for (i = 0; i < T_MAXF; i++)
 	{
 		if (!t_down[i] || !t_rel[i]) continue;
-		if (t_role[i] == R_RELOAD) t_impulse = 21;
-		else if (t_role[i] == R_BUY) t_impulse = 20;
-		else if (t_role[i] == R_SWAP) t_impulse = 10;
-		else if (t_role[i] == R_MELEE) t_impulse = 22;
+		if (t_role[i] == R_RELOAD) Act(21);
+		else if (t_role[i] == R_BUY) Act(20);
+		else if (t_role[i] == R_SWAP) Act(10);
+		else if (t_role[i] == R_MELEE) Act(22);
 	}
 	if (t_mode == 1)
 		Pad_Frame();
@@ -373,10 +383,12 @@ void() CSQC_Input_Frame =
 	input_movevalues_y = input_movevalues_y + t_stick_x * 400;
 	if (fire) input_buttons = input_buttons | 1;
 	if (jump) input_buttons = input_buttons | 2;
-	if (t_impulse)
+	// acciones por botones (mas fiable que los impulsos): recargar=16, cuchillada=64, cambiar=128, usar/comprar=16+128
+	if (t_actframes > 0)
 	{
-		input_impulse = t_impulse;
-		t_impulse = 0;
+		input_buttons = input_buttons | t_act;
+		t_actframes = t_actframes - 1;
+		if (t_actframes <= 0) t_act = 0;
 	}
 	// ya se aplico lo ultimo de los dedos que se soltaron
 	for (i = 0; i < T_MAXF; i++)

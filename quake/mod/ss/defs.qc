@@ -62,6 +62,7 @@ float zm_botspawned;
 .float zm_reloading;
 .float zm_nextjump;
 .float zm_next_voice;
+.float zm_prevb;
 .float zm_stance;      // 0 de pie, 1 agachado, 2 deslizando
 .float zm_slide_end;
 .float zm_slide_start;

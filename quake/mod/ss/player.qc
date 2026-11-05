@@ -260,7 +260,7 @@ void(entity p) Melee =
 
 void() PlayerPreThink =
 {
-	local float imp;
+	local float imp, nb, rise;
 
 	if (self.deadflag != DEAD_NO)
 	{
@@ -283,6 +283,20 @@ void() PlayerPreThink =
 
 	// impulsos: 1-4 elegir arma, 10 siguiente, 20 comprar, 21 recargar
 	imp = self.impulse;
+	// acciones por botones del cliente (tactil/mando): flanco de subida de cada boton
+	nb = 0;
+	if (self.button5) nb = nb | 16;
+	if (self.button7) nb = nb | 64;
+	if (self.button8) nb = nb | 128;
+	rise = nb & (255 - self.zm_prevb);
+	self.zm_prevb = nb;
+	if (rise && !imp)
+	{
+		if (nb == 144) imp = 23;
+		else if (rise & 64) imp = 22;
+		else if (rise & 16) imp = 21;
+		else if (rise & 128) imp = 10;
+	}
 	if (imp)
 	{
 		self.impulse = 0;
