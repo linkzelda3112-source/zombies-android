@@ -15,6 +15,7 @@
 #define R_MELEE     8
 #define R_SLIDE     9
 #define R_ADS       10
+#define R_SPRINT    11
 
 #define K_TOUCH_A       600
 #define K_TOUCH_B       603
@@ -44,6 +45,7 @@ void(float imp) Act =
 };
 float t_inited;
 float t_ads;               // apuntando
+float t_sprint_on;         // correr activado con el boton (tactil)
 float t_fov, t_basefov;
 string dbg_txt;
 float dbg_t;
@@ -64,6 +66,7 @@ void() Touch_Init =
 	if (t_basefov < 60 || t_basefov > 120) t_basefov = 90;
 	t_fov = t_basefov;
 	precache_pic("gfx/touch_ads.tga");
+	precache_pic("gfx/touch_sprint.tga");
 	precache_pic("gfx/touch_fire.tga");
 	precache_pic("gfx/touch_reload.tga");
 	precache_pic("gfx/touch_buy.tga");
@@ -84,6 +87,7 @@ vector(float role) Touch_BtnPos =
 	if (role == R_MELEE)  return [t_w - 38, 98, 0];
 	if (role == R_SLIDE)  return [t_w - 196, t_h - 62, 0];
 	if (role == R_ADS)    return [t_w - 132, t_h - 170, 0];
+	if (role == R_SPRINT) return [t_w * 0.36, t_h - 118, 0];
 	if (role == R_BUY)    return [t_w - 134, t_h - 108, 0];
 	return '0 0 0';
 };
@@ -96,6 +100,7 @@ float(float role) Touch_BtnRadius =
 	if (role == R_SWAP || role == R_MELEE) return 22;
 	if (role == R_SLIDE) return 26;
 	if (role == R_ADS) return 28;
+	if (role == R_SPRINT) return 28;
 	return 26;
 };
 
@@ -103,7 +108,7 @@ float(float x, float y) Touch_Hit =
 {
 	local float r;
 	local vector c;
-	for (r = R_FIRE; r <= R_ADS; r++)
+	for (r = R_FIRE; r <= R_SPRINT; r++)
 	{
 		c = Touch_BtnPos(r);
 		if (vlen([x - c_x, y - c_y, 0]) < Touch_BtnRadius(r) + 6)
@@ -386,14 +391,20 @@ void() CSQC_Input_Frame =
 		else if (t_role[i] == R_BUY) Act(20);
 		else if (t_role[i] == R_SWAP) Act(10);
 		else if (t_role[i] == R_MELEE) Act(22);
+		else if (t_role[i] == R_SPRINT) t_sprint_on = !t_sprint_on;
 	}
 	if (t_mode == 1)
 	{
 		Pad_Frame();
 		if (input_buttons & 32) ads = TRUE;
 	}
-	else if (t_stick_y < -0.5 && fabs(t_stick_x) < 0.6 && sqrt(t_stick_x * t_stick_x + t_stick_y * t_stick_y) > 0.93)
-		input_buttons = input_buttons | 4;       // palanca a tope hacia adelante = correr
+	else if (t_sprint_on)
+	{	// correr (boton): sigue mientras vayas hacia adelante; se corta al soltar la palanca, disparar, apuntar, recargar...
+		if (t_stick_y < -0.3 && !(input_buttons & 33) && !(t_act & 208))
+			input_buttons = input_buttons | 4;
+		else
+			t_sprint_on = FALSE;
+	}
 	input_movevalues_x = input_movevalues_x - t_stick_y * 400;
 	input_movevalues_y = input_movevalues_y + t_stick_x * 400;
 	if (fire) input_buttons = input_buttons | 1;
@@ -464,6 +475,10 @@ void(vector viewsize, float buyready) Touch_Draw =
 	Touch_DrawBtn(R_MELEE, "gfx/touch_melee.tga", 0.45, '1 1 1');
 	Touch_DrawBtn(R_SLIDE, "gfx/touch_slide.tga", 0.45, '1 1 1');
 	Touch_DrawBtn(R_ADS, "gfx/touch_ads.tga", 0.45, '1 1 1');
+	if (t_sprint_on)
+		Touch_DrawBtn(R_SPRINT, "gfx/touch_sprint.tga", 0.95, '1 0.9 0.4');
+	else
+		Touch_DrawBtn(R_SPRINT, "gfx/touch_sprint.tga", 0.5, '1 1 1');
 	if (buyready)
 		Touch_DrawBtn(R_BUY, "gfx/touch_buy.tga", 0.95, '1 1 0.4');
 	else

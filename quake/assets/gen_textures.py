@@ -308,6 +308,14 @@ def g_ads(im, s):
     im.rect(c - 1, c - 1, c + 1, c + 1, (255, 80, 60, 255))
 
 
+def g_sprint(im, s):
+    c = s // 2
+    for k in (-7, 5):                      # dos flechas hacia arriba (correr)
+        for i in range(10):
+            for w in (-1, 0, 1):
+                im.set(c - i + w, c + k + i - 8, (255, 255, 255, 240)); im.set(c + i + w, c + k + i - 8, (255, 255, 255, 240))
+
+
 def stick_icon():
     im = Img(128, 128, (0, 0, 0, 0))
     c = 63.5
@@ -357,6 +365,7 @@ def main(out):
     circle_icon(64, ring, (170, 30, 30, 140), g_melee).save_tga(os.path.join(out, "gfx", "touch_melee.tga"))
     circle_icon(64, ring, fill, g_slide).save_tga(os.path.join(out, "gfx", "touch_slide.tga"))
     circle_icon(64, ring, fill, g_ads).save_tga(os.path.join(out, "gfx", "touch_ads.tga"))
+    circle_icon(64, ring, fill, g_sprint).save_tga(os.path.join(out, "gfx", "touch_sprint.tga"))
     stick_icon().save_tga(os.path.join(out, "gfx", "touch_stick.tga"))
 
 
