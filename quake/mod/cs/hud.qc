@@ -175,6 +175,8 @@ void(vector viewsize, float scoresshown) CSQC_DrawHud =
 		HudCenter(viewsize, viewsize_y * 0.62 + 20, (t_mode ? "press X" : "tap BUY"), '8 8 0', '0.8 0.8 0.8', 0.8);
 	}
 
+	Touch_Debug(viewsize);
+
 	// ---- controles tactiles
 	if (!over) Touch_Draw(viewsize, prompt != "");
 

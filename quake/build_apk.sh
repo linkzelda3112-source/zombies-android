@@ -49,6 +49,9 @@ sed -i '/static void FTENativeActivity_axis/,/^}/ s/IN_JoystickAxisEvent(devid, 
 sed -i '/static void FTENativeActivity_keypress/,/^}/ s/IN_KeyEvent(devid, down, qkeycode, unicode);/IN_KeyEvent(0, down, qkeycode, unicode);/' fteqw/engine/client/sys_droid.c
 grep -n "IN_JoystickAxisEvent(0\|IN_KeyEvent(0, down" fteqw/engine/client/sys_droid.c
 
+# Mando: el codigo Java original nunca enviaba los ejes (palancas/gatillos) por un error de reflexion.
+python3 -I "$ROOT/quake/patches/fix_gamepad.py" fteqw/engine/droid/src/com/fteqw/FTENativeActivity.java
+
 echo "== Herramientas Android"
 PLATFORM="$(ls "$SDK/platforms" | grep -E '^android-[0-9]+$' | sort -t- -k2 -n | tail -1)"
 BT="$(ls "$SDK/build-tools" | sort -V | tail -1)"

@@ -32,6 +32,8 @@ float t_w, t_h;           // tamano virtual de pantalla
 float t_stick_x, t_stick_y;
 float t_impulse;
 float t_inited;
+string dbg_txt;
+float dbg_t;
 float t_mode;              // 0 = tactil, 1 = control (mando)
 
 // estado del mando
@@ -230,6 +232,17 @@ float(float ie, float p1, float p2, float p3) Touch_Event =
 	d = p3;
 	if (d < 0 || d >= T_MAXF) d = 0;
 
+	// diagnostico en pantalla: ultima tecla/eje de mando recibido
+	if (ie == IE_KEYDOWN && !(p1 >= K_TOUCH_A && p1 <= K_TOUCH_B) && p1 != K_MOUSE1_A)
+	{
+		dbg_txt = strcat("tecla ", ftos(p1));
+		dbg_t = time;
+	}
+	if (ie == IE_JOYAXIS && fabs(p2) > 0.5)
+	{
+		dbg_txt = strcat("eje ", ftos(p1), " = ", ftos(rint(p2 * 100) / 100));
+		dbg_t = time;
+	}
 	if (ie == IE_JOYAXIS)
 		return Pad_Event(ie, p1, p2);
 	if ((ie == IE_KEYDOWN || ie == IE_KEYUP) && p1 >= 816 && p1 <= 839)
@@ -433,4 +446,10 @@ void(vector viewsize, float buyready) Touch_Draw =
 float(float ie, float p1, float p2, float p3) CSQC_InputEvent =
 {
 	return Touch_Event(ie, p1, p2, p3);
+};
+
+void(vector viewsize) Touch_Debug =
+{
+	if (dbg_txt != "" && time - dbg_t < 3)
+		drawstring([viewsize_x * 0.5 - 40, 6, 0], dbg_txt, '7 7 0', '0.6 1 0.6', 0.8, 0);
 };

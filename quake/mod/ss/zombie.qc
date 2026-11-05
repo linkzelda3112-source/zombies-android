@@ -199,6 +199,7 @@ entity(vector org, float hp, float spd) zombie_spawn =
 	z.solid = SOLID_SLIDEBOX;
 	z.flags = FL_MONSTER;
 	setsize(z, '-16 -16 -24', '16 16 40');
+	z.effects = z.effects | 512;   // EF_FULLBRIGHT: que se vean bien aunque la zona este oscura
 	z.zm_next_voice = time + 0.5 + random() * 3;
 	setorigin(z, org + '0 0 26');
 
