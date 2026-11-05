@@ -17,6 +17,7 @@
 #define ST_LEFT     (STAT_USER + 11)
 #define ST_STATE    (STAT_USER + 12)
 #define ST_GAMEOVER (STAT_USER + 13)
+#define ST_PERKS   (STAT_USER + 16)
 #define ST_GUMNAME  (STAT_USER + 14)
 #define ST_GUMLEFT  (STAT_USER + 15)
 
@@ -67,7 +68,7 @@ void(vector viewsize, vector c, float a) HudVignette =
 void(vector viewsize, float scoresshown) CSQC_DrawHud =
 {
 	local float pts, clip, res, wep, hit, hurt, kills, rnd, left, state, over, hp;
-	local float a, t, w, x, y, mhp;
+	local float a, t, w, x, y, mhp, mperks;
 	local string prompt;
 	local vector c;
 
@@ -86,6 +87,7 @@ void(vector viewsize, float scoresshown) CSQC_DrawHud =
 	mhp = getstatf(ST_MAXHP);
 	if (mhp < 100) mhp = 100;
 	prompt = getstats(ST_PROMPT);
+	mperks = getstatf(ST_PERKS);
 
 	// ---- detectar cambios (anuncio de ronda, ganancia de puntos, impactos, danos)
 	if (rnd != hud_round)
@@ -154,7 +156,12 @@ void(vector viewsize, float scoresshown) CSQC_DrawHud =
 	if (hp < mhp * 0.6) c = '0.95 0.8 0.1';
 	if (hp < mhp * 0.3) c = '0.95 0.15 0.1';
 	if (hp > 0) drawfill([16, viewsize_y - 20, 0], [w * hp / mhp, 6, 0], c, 0.9, 0);
-	if (mhp > 100) drawstring([14, viewsize_y - 34, 0], "JUGGER-NOG", '6 6 0', '0.9 0.2 0.2', 0.9, 0);
+	// iconos de perks (J jugger-nog, D double tap, S speed cola, W widow's wine)
+	x = 14;
+	if (mperks & 1) { drawfill([x, viewsize_y - 46, 0], '18 18 0', '0.85 0.12 0.12', 0.9, 0); drawstring([x + 4, viewsize_y - 43, 0], "J", '10 10 0', '1 1 1', 1, 0); x = x + 22; }
+	if (mperks & 2) { drawfill([x, viewsize_y - 46, 0], '18 18 0', '0.95 0.58 0.1', 0.9, 0); drawstring([x + 4, viewsize_y - 43, 0], "D", '10 10 0', '1 1 1', 1, 0); x = x + 22; }
+	if (mperks & 4) { drawfill([x, viewsize_y - 46, 0], '18 18 0', '0.15 0.75 0.3', 0.9, 0); drawstring([x + 4, viewsize_y - 43, 0], "S", '10 10 0', '1 1 1', 1, 0); x = x + 22; }
+	if (mperks & 8) { drawfill([x, viewsize_y - 46, 0], '18 18 0', '0.6 0.2 0.85', 0.9, 0); drawstring([x + 2, viewsize_y - 43, 0], "W", '10 10 0', '1 1 1', 1, 0); x = x + 22; }
 
 	// ---- ronda (numero grande rojo, abajo a la izquierda)
 	drawstring([14, viewsize_y - 62, 0], ftos(rnd), '30 30 0', '0.75 0.05 0.05', 0.95, 0);

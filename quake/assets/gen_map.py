@@ -114,6 +114,9 @@ def build():
         ("zm_buy_rifle", (0, -1), (-32, -R, 32, 32, -R + 8, 96), (0, 1, 0), (-1, 0, 0), 32),    # sur
         ("zm_buy_pistol", (-1, 0), (-R, -32, 32, -R + 8, 32, 96), (1, 0, 0), (0, 1, 0), 32),    # oeste
         ("zm_buy_jugger", (0, 1), (-400, R - 8, 32, -336, R, 96), (0, -1, 0), (1, 0, 0), 32),   # norte, a un lado
+        ("zm_buy_speed", (0, 1), (336, R - 56, 32, 400, R - 48, 96), (0, -1, 0), (1, 0, 0), 32),    # norte
+        ("zm_buy_dtap", (-1, 0), (-R + 48, 336, 32, -R + 56, 400, 96), (1, 0, 0), (0, 1, 0), 32),   # oeste
+        ("zm_buy_widow", (0, -1), (-400, -R + 48, 32, -336, -R + 56, 96), (0, 1, 0), (-1, 0, 0), 32),   # sur
         ("zm_buy_gum", (1, 0), (R - 56, -332, 32, R - 48, -268, 96), (-1, 0, 0), (0, -1, 0), 32),   # maquina de chicles (este)
     ]
     for name, d, (x0, y0, z0, x1, y1, z1), face, u, _ in plates:
@@ -136,12 +139,19 @@ def build():
     brushes.append(box(R - 48, -332, 0, R, -268, 96, M))
     brushes.append(box(R - 56, -332, 96, R, -268, 112, {"top": TEX["haz"], "all": M}))
 
+    # cuerpos de las maquinas de perks (junto a la pared, detras del cartel)
+    for x0, y0, x1, y1 in ((336, R - 48, 400, R), (-R, 336, -R + 48, 400), (-400, -R, -336, -R + 48)):
+        brushes.append(box(x0, y0, 0, x1, y1, 96, M))
+        brushes.append(box(x0, y0, 96, x1, y1, 108, {"top": TEX["haz"], "all": M}))
+    for x0, y0, x1, y1 in ((336, R - 56, 400, R - 48), (-R + 48, 336, -R + 56, 400), (-400, -R + 48, -336, -R + 56)):
+        brushes.append(box(x0, y0, 0, x1, y1, 32, M))      # base bajo el cartel
+
     ents = []
     for sx in (1, -1):
         for sy in (1, -1):
             ents.append({"classname": "info_zombie_spawn", "origin": "%d %d 4" % (sx * 590, sy * 590)})
     ents.append({"classname": "info_player_start", "origin": "0 -300 28", "angles": "0 90 0"})
-    for name, wep, org in (("smg", 1, "0 596 28"), ("shotgun", 2, "596 0 28"), ("rifle", 3, "0 -596 28"), ("pistol", 0, "-596 0 28"), ("jugger", 10, "-368 596 28"), ("gum", 11, "566 -300 28")):
+    for name, wep, org in (("smg", 1, "0 596 28"), ("shotgun", 2, "596 0 28"), ("rifle", 3, "0 -596 28"), ("pistol", 0, "-596 0 28"), ("jugger", 10, "-368 596 28"), ("gum", 11, "566 -300 28"), ("dtap", 12, "-596 368 28"), ("speed", 13, "368 596 28"), ("widow", 14, "-368 -596 28")):
         ents.append({"classname": "zm_buy", "origin": org, "wep": str(wep)})
     for x in (-480, -160, 160, 480):
         for y in (-480, -160, 160, 480):

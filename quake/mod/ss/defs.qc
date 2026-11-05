@@ -68,6 +68,9 @@ float zm_botspawned;
 .float zm_slide_start;
 .vector zm_slidedir;
 .float zm_sprinting;
+.float zm_perks;       // bits: 1 jugger-nog, 2 double tap, 4 speed cola, 8 widow's wine
+.float zm_widow_next;  // cuando puede volver a activarse Widow's Wine
+.float zm_web_end;     // (zombie) hasta cuando esta atrapado en telarana
 .float zm_gum_insta;   // hasta cuando dura Kill Joy (muerte instantanea)
 .float zm_gum_free;    // hasta cuando dura Free Fire (municion infinita)
 .float zm_gum_end;     // hasta cuando se muestra el chicle en el HUD

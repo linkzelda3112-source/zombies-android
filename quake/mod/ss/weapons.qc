@@ -45,6 +45,13 @@ void(entity p) W_Next =
 	}
 };
 
+float(entity p) W_ReloadTime =
+{
+	// Speed Cola: recarga el doble de rapido
+	if (p.zm_perks & 4) return w_reload * 0.5;
+	return w_reload;
+};
+
 void(entity p) W_Reload =
 {
 	local float w;
@@ -53,7 +60,7 @@ void(entity p) W_Reload =
 	if (p.zm_reload_end) return;
 	if (GetClip(p, w) >= w_clip) return;
 	if (GetRes(p, w) <= 0) return;
-	p.zm_reload_end = time + w_reload;
+	p.zm_reload_end = time + W_ReloadTime(p);
 	p.zm_reloading = 1;
 	p.weaponframe = 4;
 	sound(p, CHAN_ITEM, "weapons/reload.wav", 1, ATTN_NORM);
@@ -115,7 +122,9 @@ void(entity p) W_Fire =
 		return;
 	}
 	if (p.zm_gum_free <= time) SetClip(p, w, clip - 1);
-	p.zm_nextshot = time + w_rate;
+	// Double Tap Root Beer: +33% de cadencia
+	if (p.zm_perks & 2) p.zm_nextshot = time + w_rate / 1.33;
+	else p.zm_nextshot = time + w_rate;
 	sound(p, CHAN_WEAPON, w_snd, 1, ATTN_NORM);
 	p.weaponframe = 1;
 	p.zm_wf_end = time + 0.09;
@@ -166,6 +175,27 @@ entity(entity p) Buy_Near =
 	return best;
 };
 
+float(float w) Perk_Bit =
+{
+	if (w == 12) return 2;
+	if (w == 13) return 4;
+	return 8;
+};
+
+float(float w) Perk_Cost =
+{
+	if (w == 12) return 2000;
+	if (w == 13) return 3000;
+	return 4000;
+};
+
+string(float w) Perk_Name =
+{
+	if (w == 12) return "DOUBLE TAP ROOT BEER";
+	if (w == 13) return "SPEED COLA";
+	return "WIDOW'S WINE";
+};
+
 float(entity p) Gum_Cost =
 {
 	local float c;
@@ -195,7 +225,8 @@ void(entity p) Gum_Roll =
 	}
 	else if (g == 2)
 	{
-		p.zm_gumname = "PERKAHOLIC  -  JUGGER-NOG";
+		p.zm_gumname = "PERKAHOLIC  -  ALL PERKS";
+		p.zm_perks = 15;
 		p.max_health = 250;
 		p.health = 250;
 		p.zm_gum_end = time + 5;
@@ -239,6 +270,12 @@ void(entity p) Buy_Prompt =
 		else p.zm_prompt = "BUY JUGGER-NOG  [2500]";
 		return;
 	}
+	if (w >= 12 && w <= 14)
+	{
+		if (p.zm_perks & Perk_Bit(w)) p.zm_prompt = "";
+		else p.zm_prompt = strcat("BUY ", Perk_Name(w), "  [", ftos(Perk_Cost(w)), "]");
+		return;
+	}
 	if (w == 11)
 	{
 		p.zm_prompt = strcat("GOBBLEGUM MACHINE  [", ftos(Gum_Cost(p)), "]");
@@ -258,6 +295,21 @@ void(entity p) Buy_Try =
 	b = Buy_Near(p);
 	if (b == world) return;
 	w = b.wep;
+	if (w >= 12 && w <= 14)
+	{
+		if (p.zm_perks & Perk_Bit(w)) return;
+		cost = Perk_Cost(w);
+		if (p.zm_points < cost)
+		{
+			sound(p, CHAN_ITEM, "misc/nobuy.wav", 1, ATTN_NORM);
+			return;
+		}
+		p.zm_points = p.zm_points - cost;
+		p.zm_perks = p.zm_perks | Perk_Bit(w);
+		sound(p, CHAN_ITEM, "misc/buy.wav", 1, ATTN_NORM);
+		bprint(strcat("ZM: bought perk ", Perk_Name(w), "\n"));
+		return;
+	}
 	if (w == 11)
 	{
 		cost = Gum_Cost(p);
@@ -284,6 +336,7 @@ void(entity p) Buy_Try =
 		p.zm_points = p.zm_points - 2500;
 		p.max_health = 250;
 		p.health = 250;
+		p.zm_perks = p.zm_perks | 1;
 		sound(p, CHAN_ITEM, "misc/buy.wav", 1, ATTN_NORM);
 		bprint("ZM: bought perk jugger-nog\n");
 		return;

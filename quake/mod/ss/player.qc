@@ -17,6 +17,33 @@ void(entity p) player_die =
 	bprint(strcat("ZM: player died on round ", ftos(zm_round), "\n"));
 };
 
+// Widow's Wine: al recibir un golpe cuerpo a cuerpo estalla una telarana que dana al que golpeo
+// y atrapa a los zombies cercanos
+void(entity p, entity att) Widow_Burst =
+{
+	local entity z;
+	p.zm_widow_next = time + 6;
+	z = find(world, classname, "zombie");
+	while (z)
+	{
+		if (z != att && z.health > 0 && vlen(z.origin - p.origin) < 170)
+		{
+			z.zm_web_end = time + 6;
+			z.zm_attacking = 0;
+		}
+		z = find(z, classname, "zombie");
+	}
+	if (att.classname == "zombie" && att.health > 0)
+	{
+		att.zm_web_end = time + 6;
+		att.zm_attacking = 0;
+		Hurt(att, p, 150, FALSE);
+	}
+	te_gunshot(p.origin);
+	sound(p, CHAN_ITEM, "misc/nobuy.wav", 0.6, ATTN_NORM);
+	bprint("ZM: widow's wine web burst\n");
+};
+
 void(entity targ, entity attacker, float dmg, float head) Hurt =
 {
 	if (targ.classname == "zombie")
@@ -45,7 +72,11 @@ void(entity targ, entity attacker, float dmg, float head) Hurt =
 		if (targ.health <= 0)
 			player_die(targ);
 		else
+		{
 			sound(targ, CHAN_VOICE, "player/pain.wav", 1, ATTN_NORM);
+			if ((targ.zm_perks & 8) && time > targ.zm_widow_next && attacker.classname == "zombie")
+				Widow_Burst(targ, attacker);
+		}
 	}
 };
 
@@ -143,6 +174,8 @@ void() PutClientInServer =
 	self.view_ofs = '0 0 22';
 	self.zm_stance = 0;
 	self.zm_sprinting = 0;
+	self.zm_perks = 0;
+	self.zm_widow_next = 0;
 	self.zm_gum_insta = 0;
 	self.zm_gum_free = 0;
 	self.zm_gum_end = 0;
@@ -362,7 +395,7 @@ void() PlayerPostThink =
 	if (self.zm_reload_end)
 	{
 		W_Load(self.zm_cur);
-		f = (time - (self.zm_reload_end - w_reload)) / w_reload;
+		f = (time - (self.zm_reload_end - W_ReloadTime(self))) / W_ReloadTime(self);
 		f = 4 + floor(f * 4);
 		if (f > 7) f = 7;
 		if (f < 4) f = 4;

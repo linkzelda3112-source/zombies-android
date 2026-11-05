@@ -75,6 +75,21 @@ void() zombie_think =
 	self.nextthink = time + 0.1;
 	if (self.health <= 0) return;
 
+	// atrapado en telarana (Widow's Wine): inmovil y blanquecino
+	if (self.zm_web_end)
+	{
+		if (time < self.zm_web_end)
+		{
+			self.colormod = '2.2 2.2 2.4';
+			self.velocity = '0 0 0';
+			self.zm_attacking = 0;
+			self.frame = 0;
+			return;
+		}
+		self.zm_web_end = 0;
+		self.colormod = '0 0 0';
+	}
+
 	pl = zm_nearest_player(self.origin);
 	if (pl == world)
 	{
