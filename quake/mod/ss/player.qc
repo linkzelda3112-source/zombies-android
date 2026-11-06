@@ -488,7 +488,12 @@ void(entity p) Nade_Release =
 void(entity p) Nade_Throw =
 {
 	if (p.zm_nades <= 0 || time < p.zm_nade_next) return;
-	if (p.zm_nade_state || p.zm_reload_end) return;
+	if (p.zm_nade_state) return;
+	if (p.zm_reload_end)
+	{
+		p.zm_reload_end = 0;      // lanzar cancela la recarga (como en BO3)
+		p.zm_reloading = 0;
+	}
 	p.zm_nades = p.zm_nades - 1;
 	p.zm_nade_next = time + 1.3;
 	p.zm_nade_state = 1;
