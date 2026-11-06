@@ -552,6 +552,8 @@ void() PlayerPreThink =
 
 	if (self.zm_reload_end && time >= self.zm_reload_end)
 		W_ReloadDone(self);
+	if (self.zm_nade_state)
+		Nade_Anim(self);
 
 	// impulsos: 1-4 elegir arma, 10 siguiente, 20 comprar, 21 recargar
 	imp = self.impulse;
