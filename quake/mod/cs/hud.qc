@@ -18,6 +18,7 @@
 #define ST_STATE    (STAT_USER + 12)
 #define ST_GAMEOVER (STAT_USER + 13)
 #define ST_PERKS   (STAT_USER + 16)
+#define ST_NADES   (STAT_USER + 17)
 #define ST_GUMNAME  (STAT_USER + 14)
 #define ST_GUMLEFT  (STAT_USER + 15)
 
@@ -180,6 +181,12 @@ void(vector viewsize, float scoresshown) CSQC_DrawHud =
 		HudRight(viewsize_x - 14, viewsize_y - 80, "RELOADING", '8 8 0', '1 0.8 0.2', 0.9);
 	else if (clip <= 0 && res <= 0)
 		HudRight(viewsize_x - 14, viewsize_y - 80, "NO AMMO", '8 8 0', '1 0.2 0.2', 0.9);
+
+	// ---- granadas (debajo de la municion)
+	if (mperks & 8)
+		HudRight(viewsize_x - 14, viewsize_y - 96, strcat("WEB GRENADE  x", ftos(getstatf(ST_NADES))), '8 8 0', '0.8 0.5 1', 0.95);
+	else
+		HudRight(viewsize_x - 14, viewsize_y - 96, strcat("GRENADE  x", ftos(getstatf(ST_NADES))), '8 8 0', '0.85 0.85 0.7', 0.9);
 
 	// ---- zombies que faltan (arriba a la derecha)
 	if (left > 0)

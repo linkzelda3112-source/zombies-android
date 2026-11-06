@@ -11,6 +11,7 @@ import math, os, random, struct, sys
 # region de textura (u0,v0,u1,v1) en una imagen de 64x64
 SKIN, SHIRT, PANTS, FACE = (1, 1, 30, 14), (1, 17, 30, 30), (1, 33, 30, 46), (33, 1, 62, 30)
 METAL, WOOD, LIGHT, CLOTH = (1, 1, 14, 14), (17, 1, 30, 14), (33, 1, 46, 14), (49, 1, 62, 14)
+GRN, PUR = (17, 17, 30, 30), (33, 17, 46, 30)      # granadas (vista en primera persona)
 RAGS, RIBS, BONE = (1, 49, 30, 62), (33, 33, 46, 46), (49, 33, 62, 46)   # solo zombie
 
 # caras: indices de esquinas (0..7) y normal local
@@ -101,6 +102,8 @@ class Mesh:
                     n = _cross(_sub(pb, pa), _sub(pc, pa))
                     m = [(pa[k] + pb[k] + pc[k]) / 3 - cen[k] for k in range(3)]
                     sgn += sum(n[k] * m[k] for k in range(3))
+                if getattr(box, 'inward', False):
+                    sgn = -sgn
                 if sgn < 0:
                     tris = [(a, c, b) for a, b, c in tris]
                 t0 = len(self.tris)
@@ -592,6 +595,8 @@ def make_textures(outdir):
     region_fill(g, LIGHT, (120, 124, 132), rng, 6)
     region_fill(g, CLOTH, (60, 78, 52), rng, 8)
     region_fill(g, SKIN, (200, 160, 130), rng, 6)
+    region_fill(g, GRN, (84, 94, 56), rng, 7)
+    region_fill(g, PUR, (104, 44, 150), rng, 7)
     save_tga(os.path.join(outdir, "models", "gun.tga"), 64, 64, g)
 
 
@@ -624,12 +629,106 @@ def preview(path_png, mesh, frames, sel, view="side", scale=3.0, cols=8):
     img.save(path_png)
 
 
+def make_grenades(out):
+    """Granada (olivo = fragmentacion, morada = Widow's Wine) y esfera de telarana (se dibuja aditiva)."""
+    rings = [(5.4, 0, 0, 0.8, 0.8), (3.6, 0, 0, 1.0, 1.0), (3.3, 0, 0, 1.9, 1.9), (2.6, 0, 0, 2.7, 2.7),
+             (0.6, 0, 0, 3.1, 3.1), (-1.6, 0, 0, 3.0, 3.0), (-3.0, 0, 0, 2.3, 2.3), (-3.6, 0, 0, 1.4, 1.4), (-3.7, 0, 0, 0.2, 0.2)]
+    mesh = Mesh([Loft("z", rings, (0, 0, 63, 63), 12)], 64)
+    fr = [mesh.frame([lambda p: p])]
+    write_md3(os.path.join(out, "models", "grenade.md3"), "grenade", mesh, fr, "models/grenade.tga")
+    write_md3(os.path.join(out, "models", "grenade_w.md3"), "grenade_w", mesh, fr, "models/grenade_w.tga")
+    rng = random.Random(3)
+    for name, base, line in (("grenade", (78, 88, 52), (40, 46, 28)), ("grenade_w", (96, 40, 140), (60, 255, 120))):
+        px = []
+        for y in range(64):
+            for x in range(64):
+                c = base
+                f = (y / 64.0 * 6) % 1.0
+                if f < 0.1 or abs((x / 64.0 * 8) % 1.0 - 0.5) < 0.04:
+                    c = line
+                k = rng.uniform(-8, 8)
+                px.append(tuple(max(0, min(255, int(v + k))) for v in c))
+        save_tga(os.path.join(out, "models", name + ".tga"), 64, 64, px)
+    # telarana: esfera de radio 32 (se escala en el juego); fondo negro + hilos claros
+    import math as m
+    wr = []
+    for i in range(13):
+        phi = m.pi * i / 12
+        wr.append((32 * m.cos(phi), 0, 0, max(0.3, 32 * m.sin(phi)), max(0.3, 32 * m.sin(phi))))
+    outer = Loft("z", wr, (0, 0, 127, 127), 16)
+    inner = Loft("z", [(a * 0.985, b, c, d * 0.985, e * 0.985) for a, b, c, d, e in wr], (0, 0, 127, 127), 16)
+    inner.inward = True
+    wm = Mesh([outer, inner], 128)
+    write_md3(os.path.join(out, "models", "web.md3"), "web", wm, [wm.frame([lambda p: p, lambda p: p])], "models/web.tga")
+    px = []
+    for y in range(128):
+        for x in range(128):
+            u, v = x / 127.0, y / 127.0
+            f = (u * 16) % 1.0
+            dm = min(f, 1 - f) * 8.0                                  # distancia (px) al meridiano
+            f2 = ((v + 0.022 * m.sin(u * 16 * 2 * m.pi)) * 12) % 1.0
+            dp = min(f2, 1 - f2) * 10.7                               # distancia al arco
+            a = max(0.0, 1 - dm / 1.1, 1 - dp / 1.0)
+            px.append((int(235 * a), int(230 * a), int(255 * a)))
+    save_tga(os.path.join(out, "models", "web.tga"), 128, 128, px)
+
+
+def grenade_vm(purple):
+    """Granada en la mano derecha; la izquierda quita el seguro y despues se lanza.
+    10 cuadros: 0-3 quitar seguro, 4-5 impulso, 6 suelta, 7-9 regresa."""
+    reg = PUR if purple else GRN
+    sph = [(5.4, 0.8), (3.6, 1.0), (3.3, 1.9), (2.6, 2.7), (0.6, 3.1), (-1.6, 3.0), (-3.0, 2.3), (-3.6, 1.4), (-3.7, 0.2)]
+    gren = Loft("z", [(z - 7.5, 14, -7.5, r, r) for z, r in sph], reg, 12)
+    arm = Box(-14, 4, -9, -5, -13, -8, CLOTH)
+    hand = Box(3, 12, -9.5, -4.5, -13, -7.4, SKIN)
+    fingers = Box(11, 15.5, -9.8, -5.2, -11.5, -8.2, SKIN)           # dedos que rodean la granada
+    thumb = Box(10, 16, -5.6, -3.8, -9.5, -7.6, SKIN)
+    lever = Box(11, 18, -10.2, -9.4, -11, -5.2, LIGHT)               # palanca de seguridad
+    pin = Box(13, 14, -9.2, -4.2, -3.6, -2.8, LIGHT)                 # seguro
+    lhand = Box(14, 20, -3.5, 1, -12, -8, SKIN)
+    lsleeve = Box(6, 14, -3.5, 1.2, -13, -9, CLOTH)
+    boxes = [arm, hand, fingers, thumb, gren, lever, pin, lhand, lsleeve]
+    mesh = Mesh(boxes)
+    pv = (6, -5, -6)
+    gone = lambda p: (p[0], p[1], p[2] - 300)
+
+    def R(dx, dz, pitch):
+        return lambda p: (lambda q: (q[0] + dx, q[1], q[2] + dz))(rot_y(p, pv, pitch))
+
+    def L(dx, dy, dz):
+        return lambda p: (p[0] + dx, p[1] + dy, p[2] + dz)
+
+    #      mano derecha        izquierda          granada  seguro
+    seq = [((0, 0, 0),          (5, 4, -16),       1, 1),
+           ((0, 1.2, -4),       (1.5, 1.5, -3),    1, 1),
+           ((0, 1.5, -5),       (-1.2, -1.5, 5.5), 1, 1),     # mano izquierda en el seguro
+           ((0, 1.5, -5),       (-4, -3, 4),       1, 0),     # tira y se lleva el seguro
+           ((-7, 3, -20),       (-4, 4, -22),      1, 0),     # impulso hacia atras y arriba
+           ((2, 4.5, -38),      (0, 6, -40),       1, 0),     # barrido hacia delante
+           ((9, 1.5, -12),      (0, 6, -60),       0, 0),     # suelta
+           ((8, -3, 8),         (0, 6, -80),       0, 0),     # sigue el movimiento
+           ((2, -8, 16),        (0, 6, -80),       0, 0),
+           ((0, -14, 20),       (0, 6, -80),       0, 0)]
+    frames = []
+    for (rx, rz, rp), (lx, ly, lz), g, pn_ in seq:
+        r, l = R(rx, rz, rp), L(lx, ly, lz)
+        hide_g = (lambda p: p) if g else gone
+        fg = (lambda p: r(p)) if g else gone
+        fp = (lambda p: r(p)) if pn_ else gone
+        frames.append(mesh.frame([r, r, r, r, fg, fg, fp, l, l]))
+    return mesh, frames
+
+
 def main(out, prev=None):
+    make_grenades(out)
     make_textures(out)
     mesh, frames = zombie()
     write_md3(os.path.join(out, "models", "zombie.md3"), "zombie", mesh, frames, "models/zombie.tga")
     if prev:
         preview(os.path.join(prev, "prev_zombie.png"), mesh, frames, list(range(16)))
+    for pur in (False, True):
+        vm, vf = grenade_vm(pur)
+        write_md3(os.path.join(out, "models", "v_grenade%s.md3" % ("_w" if pur else "")), "v_grenade", vm, vf, "models/gun.tga")
     for k in ("pistol", "smg", "shotgun", "rifle"):
         gm, gf = gun(k)
         write_md3(os.path.join(out, "models", "v_%s.md3" % k), k, gm, gf, "models/gun.tga")

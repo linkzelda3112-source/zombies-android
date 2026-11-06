@@ -295,6 +295,16 @@ def g_jump(im, s):
     im.rect(c - 3, c, c + 4, c + 12, (255, 255, 255, 240))
 
 
+def g_nade(im, s):
+    c = s // 2
+    for y in range(s):
+        for x in range(s):
+            if math.hypot(x - c, (y - c - 3) * 1.1) <= 11:
+                im.set(x, y, (235, 235, 235, 235))
+    im.rect(c - 3, c - 17, c + 3, c - 9, (235, 235, 235, 235))
+    im.rect(c + 3, c - 17, c + 12, c - 14, (235, 235, 235, 235))
+
+
 def g_melee(im, s):
     c = s // 2
     # cuchillo en diagonal: hoja + mango
@@ -386,6 +396,7 @@ def main(out):
     circle_icon(64, ring, (140, 110, 20, 140), g_buy).save_tga(os.path.join(out, "gfx", "touch_buy.tga"))
     circle_icon(64, ring, fill, g_swap).save_tga(os.path.join(out, "gfx", "touch_swap.tga"))
     circle_icon(64, ring, fill, g_jump).save_tga(os.path.join(out, "gfx", "touch_jump.tga"))
+    circle_icon(64, ring, (90, 40, 130, 140), g_nade).save_tga(os.path.join(out, "gfx", "touch_nade.tga"))
     circle_icon(64, ring, (170, 30, 30, 140), g_melee).save_tga(os.path.join(out, "gfx", "touch_melee.tga"))
     circle_icon(64, ring, fill, g_slide).save_tga(os.path.join(out, "gfx", "touch_slide.tga"))
     circle_icon(64, ring, fill, g_ads).save_tga(os.path.join(out, "gfx", "touch_ads.tga"))

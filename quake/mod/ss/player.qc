@@ -30,6 +30,7 @@ void(entity p, entity att) Widow_Burst =
 		{
 			z.zm_web_end = time + 6;
 			z.zm_attacking = 0;
+			Web_Cocoon(z, 6);
 		}
 		z = find(z, classname, "zombie");
 	}
@@ -37,9 +38,10 @@ void(entity p, entity att) Widow_Burst =
 	{
 		att.zm_web_end = time + 6;
 		att.zm_attacking = 0;
+		Web_Cocoon(att, 6);
 		Hurt(att, p, 150, FALSE);
 	}
-	te_gunshot(p.origin);
+	Web_Burst(p.origin + '0 0 20', 170);
 	sound(p, CHAN_ITEM, "misc/nobuy.wav", 0.6, ATTN_NORM);
 	bprint("ZM: widow's wine web burst\n");
 };
@@ -91,6 +93,13 @@ void() bot_think =
 
 	// munición infinita
 	SetRes(self, self.zm_cur, 999);
+
+	// prueba de granadas: con Widow's Wine lanza una cada vez que puede
+	if (time > 12)
+	{
+		self.zm_perks = self.zm_perks | 8;
+		if (self.zm_nades > 0 && !self.zm_nade_state) self.impulse = 24;
+	}
 
 	// prueba de compras: en cuanto alcanza compra el SMG en la pared
 	if (self.zm_points >= 1000 && !(self.zm_own & 2))
@@ -175,6 +184,9 @@ void() PutClientInServer =
 	self.zm_stance = 0;
 	self.zm_sprinting = 0;
 	self.zm_perks = 0;
+	self.zm_nades = 2;
+	self.zm_nade_next = 0;
+	self.zm_nade_state = 0;
 	self.zm_widow_next = 0;
 	self.zm_gum_insta = 0;
 	self.zm_gum_free = 0;
@@ -297,6 +309,224 @@ void(entity p) Melee =
 		sound(p, CHAN_WEAPON, "weapons/empty.wav", 0.7, ATTN_NORM);
 };
 
+// ---- granadas: fragmentacion o Widow's Wine (telarana) -------------------------
+// Esfera de telarana que estalla: crece rapido (con rebote suave), gira y se desvanece.
+void() Web_Think =
+{
+	local float t, k;
+	t = time - self.zm_t0;
+	if (t > self.zm_dur)
+	{
+		remove(self);
+		return;
+	}
+	k = t / 0.4;
+	if (k > 1) k = 1;
+	k = 1 - (1 - k) * (1 - k);
+	self.scale = 1 + (self.zm_scl - 1) * k;
+	if (t < 0.4) self.alpha = 1;
+	else self.alpha = 1 - (t - 0.4) / (self.zm_dur - 0.4);
+	if (self.alpha < 0.04) self.alpha = 0.04;
+	self.angles_y = t * 140;
+	self.nextthink = time + 0.05;
+};
+
+void(vector org, float scl, float dur, vector tint, float lit) Web_Layer =
+{
+	local entity e;
+	e = spawn();
+	e.classname = "web";
+	e.movetype = MOVETYPE_NONE;
+	e.solid = SOLID_NOT;
+	setmodel(e, "models/web.md3");
+	setorigin(e, org);
+	e.scale = 1;
+	e.alpha = 1;
+	e.colormod = tint;
+	e.effects = EF_ADDITIVE;
+	if (lit) e.effects = e.effects | EF_BRIGHTLIGHT;
+	e.zm_t0 = time;
+	e.zm_scl = scl;
+	e.zm_dur = dur;
+	e.think = Web_Think;
+	e.nextthink = time + 0.05;
+};
+
+// estallido: nucleo blanco, esfera violeta que se expande y onda verde mas grande
+void(vector org, float rad) Web_Burst =
+{
+	local float sc;
+	sc = rad / 32;
+	Web_Layer(org, sc * 0.55, 0.8, '2 2 2', FALSE);
+	Web_Layer(org, sc, 2.4, '1.5 0.9 2.2', TRUE);
+	Web_Layer(org, sc * 1.25, 1.3, '0.5 1.8 0.8', FALSE);
+	te_gunshot(org);
+	te_gunshot(org + '0 0 24');
+};
+
+// capullo de telarana alrededor de un zombie atrapado
+void() Cocoon_Think =
+{
+	if (!self.owner || self.owner.health <= 0 || time > self.zm_t0)
+	{
+		remove(self);
+		return;
+	}
+	setorigin(self, self.owner.origin + '0 0 6');
+	self.scale = 1.25;
+	if (self.zm_t0 - time < 1) self.alpha = (self.zm_t0 - time) * 0.7;
+	self.nextthink = time + 0.1;
+};
+
+void(entity z, float dur) Web_Cocoon =
+{
+	local entity e;
+	e = spawn();
+	e.classname = "cocoon";
+	e.owner = z;
+	e.movetype = MOVETYPE_NONE;
+	e.solid = SOLID_NOT;
+	setmodel(e, "models/web.md3");
+	setorigin(e, z.origin + '0 0 6');
+	e.scale = 1.25;
+	e.alpha = 0.7;
+	e.colormod = '1.3 1.3 1.6';
+	e.effects = EF_ADDITIVE;
+	e.zm_t0 = time + dur;
+	e.think = Cocoon_Think;
+	e.nextthink = time + 0.1;
+};
+
+void() Nade_Explode =
+{
+	local entity z, nz;
+	local float d, rad, dmg;
+	if (self.zm_nadetype == 2)
+	{
+		rad = 240;
+		Web_Burst(self.origin, rad);
+		sound(self, CHAN_WEAPON, "grenade/web.wav", 1, ATTN_NORM);
+		bprint("ZM: widow grenade burst\n");
+	}
+	else
+	{
+		rad = 170;
+		te_explosion(self.origin);
+		sound(self, CHAN_WEAPON, "grenade/explode.wav", 1, ATTN_NORM);
+		bprint("ZM: frag grenade burst\n");
+	}
+	z = find(world, classname, "zombie");
+	while (z)
+	{
+		nz = find(z, classname, "zombie");
+		d = vlen(z.origin - self.origin);
+		if (z.health > 0 && d < rad)
+		{
+			if (self.zm_nadetype == 2)
+			{
+				z.zm_web_end = time + 8;
+				z.zm_attacking = 0;
+				Web_Cocoon(z, 8);
+				dmg = 150;
+			}
+			else
+				dmg = 400 * (1 - d / rad) + 40;
+			Hurt(z, self.owner, dmg, FALSE);
+		}
+		z = nz;
+	}
+	remove(self);
+};
+
+void() Nade_Touch =
+{
+	if (other == self.owner) return;
+	if (self.zm_nadetype == 2 && self.movetype != MOVETYPE_NONE)
+	{
+		// se pega a la superficie (o al zombie) y estalla enseguida
+		self.movetype = MOVETYPE_NONE;
+		self.velocity = '0 0 0';
+		self.avelocity = '0 0 0';
+		self.nextthink = time + 0.8;
+	}
+	else
+		sound(self, CHAN_AUTO, "weapons/empty.wav", 0.4, ATTN_NORM);
+};
+
+// suelta la granada (a mitad de la animacion de lanzamiento)
+void(entity p) Nade_Release =
+{
+	local entity e;
+	p.punchangle = '-9 0 0';
+	sound(p, CHAN_ITEM, "grenade/throw.wav", 1, ATTN_NORM);
+	makevectors(p.v_angle);
+	e = spawn();
+	e.classname = "grenade";
+	e.owner = p;
+	e.movetype = MOVETYPE_BOUNCE;
+	e.solid = SOLID_BBOX;
+	if (p.zm_perks & 8)
+	{
+		e.zm_nadetype = 2;
+		setmodel(e, "models/grenade_w.md3");
+	}
+	else
+	{
+		e.zm_nadetype = 1;
+		setmodel(e, "models/grenade.md3");
+	}
+	setsize(e, '-3 -3 -3', '3 3 3');
+	setorigin(e, p.origin + p.view_ofs + v_forward * 14);
+	e.velocity = v_forward * 650 + v_up * 190 + p.velocity * 0.3;
+	e.avelocity = '420 0 260';
+	e.touch = Nade_Touch;
+	e.think = Nade_Explode;
+	e.nextthink = time + 2.2;
+};
+
+// empieza el lanzamiento: sale la granada en la mano, se quita el seguro y se lanza
+void(entity p) Nade_Throw =
+{
+	if (p.zm_nades <= 0 || time < p.zm_nade_next) return;
+	if (p.zm_nade_state || p.zm_reload_end) return;
+	p.zm_nades = p.zm_nades - 1;
+	p.zm_nade_next = time + 1.3;
+	p.zm_nade_state = 1;
+	p.zm_nade_t0 = time;
+	p.zm_nextshot = time + 1.1;
+	p.zm_flash_end = 0;
+	if (p.zm_perks & 8) p.weaponmodel = "models/v_grenade_w.md3";
+	else p.weaponmodel = "models/v_grenade.md3";
+	p.weaponframe = 0;
+	sound(p, CHAN_ITEM, "weapons/empty.wav", 0.5, ATTN_NORM);
+};
+
+// animacion en primera persona (10 cuadros de 0.105 s): 0-3 seguro, 4-5 impulso, 6-9 lanzamiento y retorno
+void(entity p) Nade_Anim =
+{
+	local float t, f;
+	t = time - p.zm_nade_t0;
+	if (p.zm_nade_state == 1 && t >= 0.27)
+	{
+		sound(p, CHAN_ITEM, "weapons/empty.wav", 0.8, ATTN_NORM);       // se quita el seguro
+		p.zm_nade_state = 2;
+	}
+	if (p.zm_nade_state == 2 && t >= 0.6)
+	{
+		Nade_Release(p);
+		p.zm_nade_state = 3;
+	}
+	if (t >= 1.06)
+	{
+		p.zm_nade_state = 0;
+		W_Equip(p);
+		return;
+	}
+	f = floor(t / 0.105);
+	if (f > 9) f = 9;
+	p.weaponframe = f;
+};
+
 void() PlayerPreThink =
 {
 	local float imp, nb, rise;
@@ -335,6 +565,7 @@ void() PlayerPreThink =
 	if (rise && !imp)
 	{
 		if (nb == 144) imp = 23;
+		else if (nb == 192) imp = 24;
 		else if (rise & 64) imp = 22;
 		else if (rise & 16) imp = 21;
 		else if (rise & 128) imp = 10;
@@ -345,6 +576,7 @@ void() PlayerPreThink =
 		if (imp >= 1 && imp <= 4) W_Select(self, imp - 1);
 		else if (imp == 10) W_Next(self);
 		else if (imp == 20) Buy_Try(self);
+		else if (imp == 24) Nade_Throw(self);
 		else if (imp == 21) W_Reload(self);
 		else if (imp == 22) Melee(self);
 		else if (imp == 23)
@@ -392,7 +624,9 @@ void() PlayerPostThink =
 		self.zm_flash_end = 0;
 	}
 
-	if (self.zm_reload_end)
+	if (self.zm_nade_state)
+		Nade_Anim(self);
+	else if (self.zm_reload_end)
 	{
 		W_Load(self.zm_cur);
 		f = (time - (self.zm_reload_end - W_ReloadTime(self))) / W_ReloadTime(self);

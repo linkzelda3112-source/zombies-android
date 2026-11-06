@@ -16,6 +16,7 @@
 #define R_SLIDE     9
 #define R_ADS       10
 #define R_SPRINT    11
+#define R_NADE      12
 
 #define K_TOUCH_A       600
 #define K_TOUCH_B       603
@@ -41,6 +42,7 @@ void(float imp) Act =
 	else if (imp == 22) t_act = t_act | 64;
 	else if (imp == 10) t_act = t_act | 128;
 	else if (imp == 23 || imp == 20) t_act = t_act | 144;
+	else if (imp == 24) t_act = t_act | 192;
 	t_actframes = 4;
 };
 float t_inited;
@@ -75,6 +77,7 @@ void() Touch_Init =
 	precache_pic("gfx/touch_stick.tga");
 	precache_pic("gfx/touch_melee.tga");
 	precache_pic("gfx/touch_slide.tga");
+	precache_pic("gfx/touch_nade.tga");
 };
 
 // centro de cada boton segun el tamano de pantalla
@@ -85,6 +88,7 @@ vector(float role) Touch_BtnPos =
 	if (role == R_RELOAD) return [t_w - 136, t_h - 46, 0];
 	if (role == R_SWAP)   return [t_w - 38, 44, 0];
 	if (role == R_MELEE)  return [t_w - 38, 98, 0];
+	if (role == R_NADE)   return [t_w - 38, 152, 0];
 	if (role == R_SLIDE)  return [t_w - 196, t_h - 62, 0];
 	if (role == R_ADS)    return [t_w - 132, t_h - 170, 0];
 	if (role == R_SPRINT) return [t_w * 0.36, t_h - 118, 0];
@@ -97,7 +101,7 @@ float(float role) Touch_BtnRadius =
 	if (role == R_FIRE) return 42;
 	if (role == R_JUMP) return 28;
 	if (role == R_BUY) return 30;
-	if (role == R_SWAP || role == R_MELEE) return 22;
+	if (role == R_SWAP || role == R_MELEE || role == R_NADE) return 22;
 	if (role == R_SLIDE) return 26;
 	if (role == R_ADS) return 28;
 	if (role == R_SPRINT) return 28;
@@ -108,7 +112,7 @@ float(float x, float y) Touch_Hit =
 {
 	local float r;
 	local vector c;
-	for (r = R_FIRE; r <= R_SPRINT; r++)
+	for (r = R_FIRE; r <= R_NADE; r++)
 	{
 		c = Touch_BtnPos(r);
 		if (vlen([x - c_x, y - c_y, 0]) < Touch_BtnRadius(r) + 6)
@@ -175,7 +179,7 @@ void(float d, float x, float y) Touch_Move =
 		return;
 	}
 	// un boton de accion (recargar, comprar, cambiar) que se arrastra pasa a ser "mirar"
-	if (t_role[d] >= R_RELOAD && t_role[d] <= R_MELEE)
+	if ((t_role[d] >= R_RELOAD && t_role[d] <= R_MELEE) || t_role[d] == R_NADE)
 	{
 		if (vlen([x - t_ox[d], y - t_oy[d], 0]) > 14)
 			t_role[d] = R_LOOK;
@@ -243,7 +247,8 @@ float(float ie, float p1, float p2) Pad_Event =
 	{
 		if (p1 == K_GP_X) Act(23);                         // usar / comprar / recargar
 		else if (p1 == K_GP_Y) Act(10);                    // cambiar arma
-		else if (p1 == K_GP_RTHUMB || p1 == K_GP_RSHOULDER) Act(22);   // cuchillada
+		else if (p1 == K_GP_RTHUMB) Act(22);               // cuchillada
+		else if (p1 == K_GP_RSHOULDER) Act(24);            // granada
 		else if (p1 == K_GP_LSHOULDER) Act(21);            // recargar
 		else if (p1 == K_GP_LTHUMB) pad_sprint = !pad_sprint;     // correr (alterna)
 		else if (p1 == K_GP_DPAD_UP || p1 == K_GP_DPAD_RIGHT) Act(10);
@@ -391,6 +396,7 @@ void() CSQC_Input_Frame =
 		else if (t_role[i] == R_BUY) Act(20);
 		else if (t_role[i] == R_SWAP) Act(10);
 		else if (t_role[i] == R_MELEE) Act(22);
+		else if (t_role[i] == R_NADE) Act(24);
 		else if (t_role[i] == R_SPRINT) t_sprint_on = !t_sprint_on;
 	}
 	if (t_mode == 1)
@@ -473,6 +479,7 @@ void(vector viewsize, float buyready) Touch_Draw =
 	Touch_DrawBtn(R_RELOAD, "gfx/touch_reload.tga", 0.45, '1 1 1');
 	Touch_DrawBtn(R_SWAP, "gfx/touch_swap.tga", 0.45, '1 1 1');
 	Touch_DrawBtn(R_MELEE, "gfx/touch_melee.tga", 0.45, '1 1 1');
+	Touch_DrawBtn(R_NADE, "gfx/touch_nade.tga", 0.5, '1 1 1');
 	Touch_DrawBtn(R_SLIDE, "gfx/touch_slide.tga", 0.45, '1 1 1');
 	Touch_DrawBtn(R_ADS, "gfx/touch_ads.tga", 0.45, '1 1 1');
 	if (t_sprint_on)

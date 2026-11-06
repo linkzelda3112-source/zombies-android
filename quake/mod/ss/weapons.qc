@@ -21,6 +21,7 @@ void(entity p) W_Equip =
 
 void(entity p, float w) W_Select =
 {
+	if (p.zm_nade_state) return;
 	if (w < 0 || w >= W_COUNT) return;
 	if (!(p.zm_own & WBit(w))) return;
 	if (p.zm_cur == w) return;
@@ -57,7 +58,7 @@ void(entity p) W_Reload =
 	local float w;
 	w = p.zm_cur;
 	W_Load(w);
-	if (p.zm_reload_end) return;
+	if (p.zm_reload_end || p.zm_nade_state) return;
 	if (GetClip(p, w) >= w_clip) return;
 	if (GetRes(p, w) <= 0) return;
 	p.zm_reload_end = time + W_ReloadTime(p);
@@ -104,7 +105,7 @@ void(entity p) W_Fire =
 {
 	local float w, clip, i, sp, spd;
 	local vector src, dir;
-	if (p.zm_sprinting) return;   // no se dispara corriendo
+	if (p.zm_sprinting || p.zm_nade_state) return;   // no se dispara corriendo ni lanzando granada
 	w = p.zm_cur;
 	W_Load(w);
 	if (time < p.zm_nextshot) return;
@@ -227,6 +228,7 @@ void(entity p) Gum_Roll =
 	{
 		p.zm_gumname = "PERKAHOLIC  -  ALL PERKS";
 		p.zm_perks = 15;
+		p.zm_nades = 4;
 		p.max_health = 250;
 		p.health = 250;
 		p.zm_gum_end = time + 5;
@@ -306,6 +308,7 @@ void(entity p) Buy_Try =
 		}
 		p.zm_points = p.zm_points - cost;
 		p.zm_perks = p.zm_perks | Perk_Bit(w);
+		if (w == 14) p.zm_nades = 4;
 		sound(p, CHAN_ITEM, "misc/buy.wav", 1, ATTN_NORM);
 		bprint(strcat("ZM: bought perk ", Perk_Name(w), "\n"));
 		return;

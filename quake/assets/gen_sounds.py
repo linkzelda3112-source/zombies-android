@@ -103,6 +103,15 @@ def main(outdir):
     s("weapons/reload.wav", mix(click(rng, 1500), delay(click(rng, 2400), 0.55), delay(slide, 0.85), delay(click(rng, 3000, 0.04), 1.0)))
     s("weapons/empty.wav", click(rng, 1800, 0.05))
 
+    # granadas: lanzar, explosion de fragmentacion y estallido de telarana
+    sw = [x * 0.6 for x in lowpass(noise(rng, n_samples(0.25)), 0.25)]
+    sw = [v * math.sin(math.pi * i / len(sw)) for i, v in enumerate(sw)]
+    s("grenade/throw.wav", mix(click(rng, 1200, 0.04), delay(sw, 0.06)))
+    s("grenade/explode.wav", gunshot(rng, 1.0, 55, 7, 9, 0.22, 2.0, 0.8))
+    nw = lowpass(noise(rng, n_samples(0.9)), 0.12)
+    nw = [v * math.exp(-i / RATE * 4.5) for i, v in enumerate(nw)]
+    s("grenade/web.wav", mix([v * 1.6 for v in nw], tone(340, 0.8, 5, ((1, 1), (2, 0.4))), delay(tone(170, 0.7, 6, ((1, 1), (3, 0.3))), 0.12, 0.8)))
+
     s("zombie/groan1.wav", groan(rng, 1.1, 85, 62))
     s("zombie/groan2.wav", groan(rng, 0.8, 110, 70, 7))
     s("zombie/groan3.wav", groan(rng, 1.3, 70, 90, 4))

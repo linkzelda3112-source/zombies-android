@@ -68,6 +68,14 @@ float zm_botspawned;
 .float zm_slide_start;
 .vector zm_slidedir;
 .float zm_sprinting;
+.float zm_nades;       // granadas que tiene
+.float zm_nade_next;   // cuando puede lanzar otra
+.float zm_nadetype;    // (granada) 1 fragmentacion, 2 Widow's Wine
+.float zm_t0;          // (efecto) cuando empezo
+.float zm_scl;         // (telarana) escala final
+.float zm_dur;         // (telarana) duracion
+.float zm_nade_state;  // lanzamiento: 0 nada, 1 sacando el seguro, 2 tomando impulso, 3 ya lanzada
+.float zm_nade_t0;     // cuando empezo la animacion de lanzamiento
 .float zm_perks;       // bits: 1 jugger-nog, 2 double tap, 4 speed cola, 8 widow's wine
 .float zm_widow_next;  // cuando puede volver a activarse Widow's Wine
 .float zm_web_end;     // (zombie) hasta cuando esta atrapado en telarana
@@ -173,5 +181,7 @@ void(entity e, float w, float v) SetRes =
 
 // ---- prototipos adelantados -------------------------------------------------
 void(entity targ, entity attacker, float dmg, float head) Hurt;
+void(vector org, float rad) Web_Burst;
+void(entity z, float dur) Web_Cocoon;
 void() zombie_think;
 entity(vector org, float hp, float spd) zombie_spawn;

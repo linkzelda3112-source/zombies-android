@@ -46,6 +46,14 @@ void() worldspawn =
 	zm_test = cvar("zm_test");
 
 	precache_model("models/zombie.md3");
+	precache_model("models/grenade.md3");
+	precache_model("models/grenade_w.md3");
+	precache_model("models/web.md3");
+	precache_model("models/v_grenade.md3");
+	precache_model("models/v_grenade_w.md3");
+	precache_sound("grenade/throw.wav");
+	precache_sound("grenade/explode.wav");
+	precache_sound("grenade/web.wav");
 	precache_model("models/v_pistol.md3");
 	precache_model("models/v_smg.md3");
 	precache_model("models/v_shotgun.md3");
@@ -85,6 +93,7 @@ void() worldspawn =
 	clientstat(STAT_USER + 7, EV_FLOAT, zm_kills);
 	clientstat(STAT_USER + 8, EV_FLOAT, zm_reloading);
 	clientstat(STAT_USER + 9, EV_FLOAT, max_health);
+	clientstat(STAT_USER + 17, EV_FLOAT, zm_nades);
 	clientstat(STAT_USER + 16, EV_FLOAT, zm_perks);
 	clientstat(STAT_USER + 14, EV_STRING, zm_gumname);
 	clientstat(STAT_USER + 15, EV_FLOAT, zm_gumleft);
@@ -135,6 +144,7 @@ entity() zm_pick_spawn =
 void() zm_start_round =
 {
 	local float i, total;
+	local entity pp;
 
 	zm_round = zm_round + 1;
 	total = floor(6 + zm_round * 3.5);
@@ -155,6 +165,15 @@ void() zm_start_round =
 	else if (zm_round <= 4) zm_speed = 90;
 	else if (zm_round <= 7) zm_speed = 130;
 	else zm_speed = 165;
+
+	// las granadas se recuperan al empezar la ronda (Widow's Wine: 4, normales: 2)
+	pp = find(world, classname, "player");
+	while (pp)
+	{
+		if (pp.zm_perks & 8) pp.zm_nades = 4;
+		else if (pp.zm_nades < 2) pp.zm_nades = 2;
+		pp = find(pp, classname, "player");
+	}
 
 	zm_state = ZS_ACTIVE;
 	zm_next_spawn = time + 1;

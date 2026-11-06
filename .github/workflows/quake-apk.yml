@@ -51,6 +51,7 @@ jobs:
             timeout 70 "$SV" -nohome -basedir . -basepack ../game.zip +set zm_test $T +set developer 1 +map zombies > log$T.txt 2>&1 || true
             grep -a -o 'ZM: [^\n]*' log$T.txt | head -8 || true
           done
+          grep -a -q 'widow grenade burst' log2.txt || { echo "La granada de Widow's Wine no exploto"; tail -40 log2.txt; exit 1; }
           grep -a -q 'round 2 start' log2.txt || { echo "El bot no llego a la ronda 2"; tail -40 log2.txt; exit 1; }
 
       - name: Compilar APK
