@@ -17,7 +17,8 @@
 #define W_SMG     1
 #define W_SHOTGUN 2
 #define W_RIFLE   3
-#define W_COUNT   4
+#define W_HAYMAKER 4
+#define W_COUNT   5
 
 // ---- estados de la partida --------------------------------------------------
 #define ZS_WAIT   0   // esperando jugador
@@ -46,8 +47,8 @@ float zm_botspawned;
 .float zm_lasthurt;
 .float zm_cur;          // arma actual
 .float zm_own;          // armas que tiene (bit por arma)
-.float zm_clip0, zm_clip1, zm_clip2, zm_clip3;
-.float zm_res0, zm_res1, zm_res2, zm_res3;
+.float zm_clip0, zm_clip1, zm_clip2, zm_clip3, zm_clip4;
+.float zm_res0, zm_res1, zm_res2, zm_res3, zm_res4;
 .float zm_reload_end;   // cuando termina de recargar (0 = no recarga)
 .float zm_nextshot;
 .float zm_wf_end;       // cuando vuelve la animacion del arma a reposo
@@ -124,25 +125,31 @@ void(float w) W_Load =
 	if (w == W_SMG)
 	{
 		w_name = "KUDA SMG";     w_vmodel = "models/v_smg.md3";     w_snd = "weapons/smg.wav";
-		w_dmg = 22;  w_clip = 30; w_resmax = 150; w_pellets = 1; w_auto = TRUE;
+		w_dmg = 34;  w_clip = 30; w_resmax = 150; w_pellets = 1; w_auto = TRUE;
 		w_rate = 0.085; w_reload = 2.1; w_spread = 0.035; w_hip = 0.05; w_cost = 1000; w_ammocost = 500;
 	}
 	else if (w == W_SHOTGUN)
 	{
 		w_name = "TRENCH GUN";   w_vmodel = "models/v_shotgun.md3"; w_snd = "weapons/shotgun.wav";
-		w_dmg = 16;  w_clip = 6;  w_resmax = 36;  w_pellets = 8; w_auto = FALSE;
+		w_dmg = 22;  w_clip = 6;  w_resmax = 36;  w_pellets = 8; w_auto = FALSE;
 		w_rate = 0.85;  w_reload = 2.8; w_spread = 0.085; w_hip = 0.035; w_cost = 1500; w_ammocost = 750;
+	}
+	else if (w == W_HAYMAKER)
+	{
+		w_name = "HAYMAKER 12";  w_vmodel = "models/v_haymaker.md3"; w_snd = "weapons/shotgun.wav";
+		w_dmg = 20;  w_clip = 12; w_resmax = 72;  w_pellets = 8; w_auto = TRUE;
+		w_rate = 0.2;   w_reload = 2.9; w_spread = 0.09; w_hip = 0.035; w_cost = 2500; w_ammocost = 1250;
 	}
 	else if (w == W_RIFLE)
 	{
 		w_name = "G-43 RIFLE";   w_vmodel = "models/v_rifle.md3";   w_snd = "weapons/rifle.wav";
-		w_dmg = 95;  w_clip = 10; w_resmax = 60;  w_pellets = 1; w_auto = FALSE;
+		w_dmg = 150; w_clip = 10; w_resmax = 60;  w_pellets = 1; w_auto = FALSE;
 		w_rate = 0.5;   w_reload = 2.3; w_spread = 0.004; w_hip = 0.055; w_cost = 2000; w_ammocost = 1000;
 	}
 	else
 	{
 		w_name = "M1911";        w_vmodel = "models/v_pistol.md3";  w_snd = "weapons/pistol.wav";
-		w_dmg = 30;  w_clip = 8;  w_resmax = 40;  w_pellets = 1; w_auto = FALSE;
+		w_dmg = 50;  w_clip = 8;  w_resmax = 40;  w_pellets = 1; w_auto = FALSE;
 		w_rate = 0.25;  w_reload = 1.6; w_spread = 0.006; w_hip = 0.03; w_cost = 0; w_ammocost = 500;
 	}
 };
@@ -152,6 +159,7 @@ float(entity e, float w) GetClip =
 	if (w == 0) return e.zm_clip0;
 	if (w == 1) return e.zm_clip1;
 	if (w == 2) return e.zm_clip2;
+	if (w == 4) return e.zm_clip4;
 	return e.zm_clip3;
 };
 
@@ -160,6 +168,7 @@ void(entity e, float w, float v) SetClip =
 	if (w == 0) e.zm_clip0 = v;
 	else if (w == 1) e.zm_clip1 = v;
 	else if (w == 2) e.zm_clip2 = v;
+	else if (w == 4) e.zm_clip4 = v;
 	else e.zm_clip3 = v;
 };
 
@@ -168,6 +177,7 @@ float(entity e, float w) GetRes =
 	if (w == 0) return e.zm_res0;
 	if (w == 1) return e.zm_res1;
 	if (w == 2) return e.zm_res2;
+	if (w == 4) return e.zm_res4;
 	return e.zm_res3;
 };
 
@@ -176,6 +186,7 @@ void(entity e, float w, float v) SetRes =
 	if (w == 0) e.zm_res0 = v;
 	else if (w == 1) e.zm_res1 = v;
 	else if (w == 2) e.zm_res2 = v;
+	else if (w == 4) e.zm_res4 = v;
 	else e.zm_res3 = v;
 };
 

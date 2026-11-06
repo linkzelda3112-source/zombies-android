@@ -7,6 +7,7 @@ float(float w) WBit =
 	if (w == 0) return 1;
 	if (w == 1) return 2;
 	if (w == 2) return 4;
+	if (w == 4) return 16;
 	return 8;
 };
 
@@ -93,7 +94,9 @@ void(entity p) W_TraceHit =
 		head = FALSE;
 		if ((trace_endpos_z - t.origin_z) > 22) head = TRUE;
 		te_blood(trace_endpos, '0 0 0', 30);
-		Hurt(t, p, w_dmg, head);
+		// impacto en la cabeza: dano doble con armas de un solo proyectil (como en BO3)
+		if (head && w_pellets == 1) Hurt(t, p, w_dmg * 2, head);
+		else Hurt(t, p, w_dmg, head);
 	}
 	else if (trace_fraction < 1)
 	{
@@ -131,7 +134,7 @@ void(entity p) W_Fire =
 	p.zm_wf_end = time + 0.09;
 	p.effects = p.effects | EF_MUZZLEFLASH;
 	p.zm_flash_end = time + 0.07;
-	if (w == W_SHOTGUN)
+	if (w_pellets > 1)
 		p.punchangle = '-5 0 0';
 	else if (w == W_RIFLE)
 		p.punchangle = '-4 0 0';

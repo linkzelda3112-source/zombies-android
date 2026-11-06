@@ -178,6 +178,7 @@ PLATES = {
     "zm_buy_pistol":  ("M1911", "500", (210, 210, 210), "pistol"),
     "zm_buy_smg":     ("KUDA SMG", "1000", (255, 190, 40), "smg"),
     "zm_buy_shotgun": ("TRENCH GUN", "1500", (230, 90, 60), "shotgun"),
+    "zm_buy_haymaker": ("HAYMAKER 12", "2500", (255, 140, 40), "haymaker"),
     "zm_buy_rifle":   ("G-43 RIFLE", "2000", (90, 190, 255), "rifle"),
     "zm_buy_jugger":  ("JUGGER-NOG", "2500", (220, 40, 40), "perk"),
     "zm_buy_dtap":    ("DOUBLE TAP", "2000", (240, 150, 30), "perk"),
@@ -202,6 +203,10 @@ def tex_plate(name, rng):
         im.rect(50, 100, 200, 120, ink); im.rect(200, 106, 222, 114, ink); im.rect(110, 120, 126, 168, ink); im.rect(60, 120, 80, 150, ink)
     elif kind == "shotgun":
         im.rect(30, 108, 226, 120, ink); im.rect(30, 120, 140, 130, (150, 100, 60)); im.rect(70, 124, 110, 150, (150, 100, 60))
+    elif kind == "haymaker":
+        im.rect(30, 100, 206, 112, ink); im.rect(206, 97, 228, 115, ink)         # canon y freno
+        im.rect(100, 100, 190, 128, ink); im.rect(50, 104, 100, 124, ink)       # cajon y culata
+        im.rect(118, 128, 162, 178, (120, 124, 134)); im.rect(122, 132, 158, 140, (80, 84, 92))   # cargador de tambor
     elif kind == "perk":
         im.rect(100, 90, 156, 160, tuple(int(c * 0.85) for c in col)); im.rect(108, 80, 148, 90, ink); im.rect(112, 110, 144, 140, (240, 240, 240))
     elif kind == "gum":

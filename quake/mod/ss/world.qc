@@ -49,6 +49,7 @@ void() worldspawn =
 	precache_model("models/grenade.md3");
 	precache_model("models/grenade_w.md3");
 	precache_model("models/web.md3");
+	precache_model("models/v_haymaker.md3");
 	precache_model("models/v_grenade.md3");
 	precache_model("models/v_grenade_w.md3");
 	precache_sound("grenade/throw.wav");
@@ -152,10 +153,10 @@ void() zm_start_round =
 	zm_left = total;
 
 	if (zm_round < 10)
-		zm_hp = 100 + zm_round * 50;
+		zm_hp = 50 + zm_round * 100;      // como BO3: 150, 250, 350 ... 950
 	else
 	{
-		zm_hp = 550;
+		zm_hp = 950;
 		for (i = 9; i < zm_round; i = i + 1)
 			zm_hp = zm_hp * 1.1;
 	}

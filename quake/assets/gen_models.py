@@ -343,6 +343,22 @@ def gun(kind):
                  Box(8, 14, -7, -4, -9, -4, METAL),              # recamara
                  Box(8.5, 13, -7.6, -3.4, -6.5, -5.2, LIGHT),    # ventana de expulsion
                  Box(37, 38, -5.8, -5.2, -3.2, -2.2, LIGHT)]     # mira
+    elif kind == "haymaker":
+        parts = [Box(4, 26, -7, -4, -7, -2, METAL),              # cajon del mecanismo
+                 Box(6, 32, -6.6, -4.4, -2, -1.2, LIGHT),        # riel superior
+                 Box(33, 34.2, -5.7, -5.1, -2, 0.4, LIGHT),      # mira delantera
+                 Box(7, 9.5, -5.9, -5.1, -2, 0.2, LIGHT),        # mira trasera
+                 Box(26, 40, -6.2, -4.8, -5.6, -3.2, LIGHT),     # canon
+                 Box(40, 44.5, -6.8, -4.2, -6.2, -2.8, METAL),   # freno de boca
+                 Box(41, 43.5, -7.1, -3.9, -4.8, -4.2, LIGHT),   # ranuras del freno
+                 Box(14, 34, -7.4, -3.6, -8.4, -5.6, METAL),     # guardamanos
+                 Box(18, 36, -6.5, -4.5, -10.4, -8.4, LIGHT),    # tubo inferior
+                 Box(10, 18, -8.4, -2.6, -18.5, -8.4, METAL),    # cargador de tambor
+                 Box(10.6, 17.4, -8.8, -2.2, -19.4, -18.4, LIGHT),
+                 Box(5, 8, -7, -4, -14, -7, METAL),              # empunadura
+                 Box(-5, 5, -6.6, -4.4, -6.4, -2.4, METAL),      # parte trasera
+                 Box(-13, -5, -6.8, -4.2, -8.6, -2.2, METAL),    # culata angular
+                 Box(-15, -13, -7.2, -3.8, -9.6, -1.8, LIGHT)]   # cantonera
     else:
         parts = [Box(-8, 12, -7, -4, -9, -3, WOOD),             # culata
                  Box(-10, -8, -7.2, -3.8, -9.8, -2.4, METAL),
@@ -729,7 +745,7 @@ def main(out, prev=None):
     for pur in (False, True):
         vm, vf = grenade_vm(pur)
         write_md3(os.path.join(out, "models", "v_grenade%s.md3" % ("_w" if pur else "")), "v_grenade", vm, vf, "models/gun.tga")
-    for k in ("pistol", "smg", "shotgun", "rifle"):
+    for k in ("pistol", "smg", "shotgun", "rifle", "haymaker"):
         gm, gf = gun(k)
         write_md3(os.path.join(out, "models", "v_%s.md3" % k), k, gm, gf, "models/gun.tga")
         if prev:

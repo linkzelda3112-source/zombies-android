@@ -37,6 +37,7 @@ string(float w) HudWeaponName =
 	if (w == 1) return "KUDA SMG";
 	if (w == 2) return "TRENCH GUN";
 	if (w == 3) return "G-43 RIFLE";
+	if (w == 4) return "HAYMAKER 12";
 	return "M1911";
 };
 

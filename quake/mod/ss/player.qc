@@ -580,7 +580,7 @@ void() PlayerPreThink =
 	if (imp)
 	{
 		self.impulse = 0;
-		if (imp >= 1 && imp <= 4) W_Select(self, imp - 1);
+		if (imp >= 1 && imp <= 5) W_Select(self, imp - 1);
 		else if (imp == 10) W_Next(self);
 		else if (imp == 20) Buy_Try(self);
 		else if (imp == 24) Nade_Throw(self);
